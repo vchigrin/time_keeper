@@ -1,0 +1,17 @@
+executable('mobile_time_tracker',
+           'database.cc',
+           'database.h',
+           'error_codes.cc',
+           'error_codes.h',
+           'main.cc',
+           'select_rows.cc',
+           'select_rows.h',
+           'verify.h',
+           install : true,
+           include_directories : [project_include_dir],
+           dependencies : [
+             boost_dep,
+             gtkmm_dep,
+             libhandy_dep,
+             sqlite_dep,
+           ])
