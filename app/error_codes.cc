@@ -16,6 +16,8 @@ std::string CustomErrorCategory::message(int c) const {
   switch (static_cast<ErrorCodes>(c)) {
     case ErrorCodes::kOk:
       return "No error";
+    case ErrorCodes::kUnknownDbParameterName:
+      return "Unknown DB parameter name";
     default:
       NOTREACHED();
   }

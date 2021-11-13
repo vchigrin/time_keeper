@@ -16,6 +16,8 @@ namespace m_time_tracker {
 
 class SelectRows {
  public:
+  static const std::error_code kEcDone;
+
   explicit SelectRows(sqlite3_stmt* stmt) noexcept
       : stmt_(stmt) {
     VERIFY(stmt);

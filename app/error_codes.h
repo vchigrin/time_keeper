@@ -15,6 +15,7 @@ namespace m_time_tracker {
 
 enum class ErrorCodes {
   kOk = 0,
+  kUnknownDbParameterName,
 };
 
 static_assert(SQLITE_OK == 0, "Ok code should be 0 for std::result");

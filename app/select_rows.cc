@@ -8,6 +8,8 @@
 
 namespace m_time_tracker {
 
+const std::error_code SelectRows::kEcDone = ErrorCodeFromSqlite(SQLITE_DONE);
+
 SelectRows::~SelectRows() {
   if (stmt_) {
     const int result = sqlite3_finalize(stmt_);

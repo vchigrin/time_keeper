@@ -5,6 +5,26 @@
 #include <iostream>
 
 #include "app/database.h"
+#include "app/task.h"
+
+
+void PrintChildren(
+    m_time_tracker::Database* db,
+    const m_time_tracker::Task& parent) {
+  auto maybe_tasks = m_time_tracker::Task::LoadChildTasks(db, parent);
+  if (!maybe_tasks) {
+    std::cerr << "Failed execute SelECT; Error "
+              << maybe_tasks.error().message() << std::endl;
+    return;
+  }
+  const std::vector<m_time_tracker::Task>& tasks = maybe_tasks.value();
+  std::cout << std::boolalpha;
+  for (const auto& task : tasks) {
+    std::cout << "    ChildTask: Name=" << task.name()
+              << "; IsArchived=" << task.is_archived()
+              << std::endl;
+  }
+}
 
 int main(int, char*[]) {
   auto maybe_db = m_time_tracker::Database::Open("/tmp/test.db");
@@ -14,37 +34,37 @@ int main(int, char*[]) {
   }
   std::cout << "Open OK\n";
   m_time_tracker::Database& db = maybe_db.value();
-  auto maybe_result = db.Select("SELECT id, name, parent_task_id FROM Tasks");
-  if (!maybe_result) {
-    std::cerr << "Failed execute Select; Error "
-              << maybe_result.error() << std::endl;
+  m_time_tracker::Task new_task("88888");
+  std::error_code save_result = new_task.Save(&db);
+  if (save_result) {
+    std::cerr << "Failed save new task "
+              << save_result.message() << std::endl;;
+  } else {
+    std::cout << "New task saved; Id = " << *new_task.id() << std::endl;
+  }
+  new_task.set_archived(true);
+  save_result = new_task.Save(&db);
+  if (save_result) {
+    std::cerr << "Failed update new task "
+              << save_result.message() << std::endl;;
+  } else {
+    std::cout << "New task updated; Id = " << *new_task.id() << std::endl;
+  }
+
+  auto maybe_tasks = m_time_tracker::Task::LoadTopLevel(&db);
+  if (!maybe_tasks) {
+    std::cerr << "Failed execute SelECT; Error "
+              << maybe_tasks.error().message() << std::endl;
     return 1;
   }
-  m_time_tracker::SelectRows& rows = maybe_result.value();
-  auto Format = [](const std::optional<auto>& data) -> std::string {
-    if (data == std::nullopt) {
-      return "<NULL>";
-    } else {
-      if constexpr (
-            std::is_same_v<std::decay_t<decltype(*data)>, std::string>) {
-        return *data;
-      } else {
-        return std::to_string(*data);
-      }
-    }
-  };
-  while (true) {
-    auto err = rows.NextRow();
-    if (err) {
-      std::cerr << "Next row returns " << err.message() << std::endl;
-      break;
-    }
-    const auto id = rows.IntColumn(0);
-    const auto name = rows.StringColumn(1);
-    const auto parent_id = rows.IntColumn(2);
-    std::cout << "Row: Id=" << Format(id)
-              << "; Name=" << Format(name)
-              << "; Parent Id=" << Format(parent_id) << std::endl;
+  const std::vector<m_time_tracker::Task>& tasks = maybe_tasks.value();
+  std::cout << std::boolalpha;
+  for (const auto& task : tasks) {
+    std::cout << "Task: Name=" << task.name()
+              << "; ID= " << *task.id()
+              << "; IsArchived=" << task.is_archived()
+              << std::endl;
+    PrintChildren(&db, task);
   }
 
   return 0;
