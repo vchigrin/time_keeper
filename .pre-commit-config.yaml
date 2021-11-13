@@ -1,0 +1,16 @@
+repos:
+-   repo: local
+    hooks:
+    - id: cppcheck
+      name: cppcheck
+      description: Check correctness of C++ code using cppcheck.
+      language: system
+      files: \.(c|cc|cxx|cpp|h|hpp|hxx)$
+      entry: cppcheck --error-exitcode=1
+      args: ["--enable=warning", "--language=c++", "--std=c++17"]
+    - id: cpplint
+      name: cpplint
+      description: Check style of C++ code using cpplint.
+      language: python
+      files: \.(c|cc|cxx|cpp|h|hpp|hxx)$
+      entry: cpplint
