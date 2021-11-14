@@ -66,12 +66,12 @@ outcome::std_result<std::vector<Task>> Task::LoadWithQuery(
   SelectRows& rows = maybe_rows.value();
   std::vector<Task> result;
   while (true) {
-    const auto maybe_err = rows.NextRow();
-    if (maybe_err == SelectRows::kEcDone) {
+    const auto next_outcome = rows.NextRow();
+    if (next_outcome == SelectRows::kOutcomeDone) {
       break;
     }
-    if (maybe_err) {
-      return maybe_err;
+    if (!next_outcome) {
+      return next_outcome.error();
     }
     result.emplace_back(CreateFromSelectRow(&rows));
   }
@@ -79,7 +79,7 @@ outcome::std_result<std::vector<Task>> Task::LoadWithQuery(
 }
 
 // static
-std::error_code Task::Save(Database* db) noexcept {
+outcome::std_result<void> Task::Save(Database* db) noexcept {
   if (id_) {
     const std::unordered_map<std::string, Database::Param> params = {
       {":name", Database::Param(name_)},
@@ -115,7 +115,7 @@ std::error_code Task::Save(Database* db) noexcept {
     }
     id_ = exec_result.value();
   }
-  return std::error_code{};
+  return outcome::success();
 }
 
 }  // namespace m_time_tracker

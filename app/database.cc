@@ -30,9 +30,9 @@ outcome::std_result<Database> Database::Open(
   if (result != SQLITE_OK) {
     return ErrorCodeFromSqlite(result);
   }
-  const auto create_error = Database::EnsureTablesCreated(connection);
-  if (create_error) {
-    return create_error;
+  const auto create_result = Database::EnsureTablesCreated(connection);
+  if (!create_result) {
+    return create_result.error();
   }
   return Database(connection);
 }
@@ -50,7 +50,8 @@ Database::~Database() {
 }
 
 // static
-std::error_code Database::EnsureTablesCreated(sqlite3* connection) noexcept {
+outcome::std_result<void> Database::EnsureTablesCreated(
+    sqlite3* connection) noexcept {
   char* error_ptr = nullptr;
   const int result = sqlite3_exec(
       connection,
@@ -65,7 +66,7 @@ std::error_code Database::EnsureTablesCreated(sqlite3* connection) noexcept {
   if (result != SQLITE_OK) {
     return ErrorCodeFromSqlite(result);
   }
-  return ErrorCodeFromSqlite(SQLITE_OK);
+  return outcome::success();
 }
 
 outcome::std_result<SelectRows> Database::Select(
@@ -105,11 +106,11 @@ outcome::std_result<int64_t> Database::Execute(
       VERIFY(result == SQLITE_OK);
       return ErrorCodes::kUnknownDbParameterName;
     }
-    const std::error_code bind_result = value.Bind(stmt, index);
-    if (bind_result) {
+    const outcome::std_result<void> bind_result = value.Bind(stmt, index);
+    if (!bind_result) {
       const int result = sqlite3_finalize(stmt);
       VERIFY(result == SQLITE_OK);
-      return bind_result;
+      return bind_result.error();
     }
   }
   const int step_result = sqlite3_step(stmt);
@@ -121,7 +122,7 @@ outcome::std_result<int64_t> Database::Execute(
   return sqlite3_last_insert_rowid(connection_);
 }
 
-std::error_code Database::Param::Bind(
+outcome::std_result<void> Database::Param::Bind(
     sqlite3_stmt* stmt, int index) const noexcept {
   const int result = std::visit(
       [stmt, index](const auto& concrete_val) {
@@ -142,7 +143,11 @@ std::error_code Database::Param::Bind(
         }
       },
       value_);
-  return ErrorCodeFromSqlite(result);
+  if (result != SQLITE_OK) {
+    return ErrorCodeFromSqlite(result);
+  } else {
+    return outcome::success();
+  }
 }
 
 }  // namespace m_time_tracker

@@ -48,8 +48,8 @@ class DbEntitiesTest : public ::testing::Test {
 TEST_F(DbEntitiesTest, TaskSave) {
   Task new_task("test_task");
   ASSERT_FALSE(new_task.id());  // New task has no id.
-  std::error_code save_error = new_task.Save(db());
-  ASSERT_FALSE(save_error);
+  outcome::std_result<void> save_outcome = new_task.Save(db());
+  ASSERT_TRUE(save_outcome);
   ASSERT_TRUE(new_task.id());  // Save() fills id.
 
   {
@@ -67,8 +67,8 @@ TEST_F(DbEntitiesTest, TaskSave) {
   const int64_t task_id = *new_task.id();
   new_task.set_name("another name");
   new_task.set_archived(true);
-  save_error = new_task.Save(db());
-  ASSERT_FALSE(save_error);
+  save_outcome = new_task.Save(db());
+  ASSERT_TRUE(save_outcome);
 
   EXPECT_EQ(new_task.id(), task_id);  // Update should not change Task id.
 
@@ -90,10 +90,10 @@ TEST_F(DbEntitiesTest, TaskLoad) {
   Task foo("foo");
   Task bar("bar");
 
-  std::error_code save_error = foo.Save(db());
-  ASSERT_FALSE(save_error);
-  save_error = bar.Save(db());
-  ASSERT_FALSE(save_error);
+  outcome::std_result<void> save_outcome = foo.Save(db());
+  ASSERT_TRUE(save_outcome);
+  save_outcome = bar.Save(db());
+  ASSERT_TRUE(save_outcome);
 
   std::vector<Task> children_of_foo, children_of_bar;
 
@@ -106,14 +106,14 @@ TEST_F(DbEntitiesTest, TaskLoad) {
 
   for (auto& t : children_of_foo) {
     t.SetParentTask(foo);
-    save_error = t.Save(db());
-    ASSERT_FALSE(save_error);
+    save_outcome = t.Save(db());
+    ASSERT_TRUE(save_outcome);
   }
 
   for (auto& t : children_of_bar) {
     t.SetParentTask(bar);
-    save_error = t.Save(db());
-    ASSERT_FALSE(save_error);
+    save_outcome = t.Save(db());
+    ASSERT_TRUE(save_outcome);
   }
 
   {
@@ -166,7 +166,7 @@ TEST_F(DbEntitiesTest, TaskLoad) {
   // Re-assign some "foo" children to "bar" and test again.
   for (size_t i = 1; i < children_of_foo.size(); ++i) {
     children_of_foo[i].SetParentTask(bar);
-    children_of_foo[i].Save(db());
+    ASSERT_TRUE(children_of_foo[i].Save(db()));
   }
 
   {

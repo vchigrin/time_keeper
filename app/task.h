@@ -25,7 +25,7 @@ class Task {
   static outcome::std_result<std::vector<Task>> LoadChildTasks(
       Database* db, const Task& parent) noexcept;
 
-  std::error_code Save(Database* db) noexcept;
+  outcome::std_result<void> Save(Database* db) noexcept;
 
   // New task object, without parent task object, not archived.
   explicit Task(std::string name) noexcept

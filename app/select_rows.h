@@ -16,7 +16,7 @@ namespace m_time_tracker {
 
 class SelectRows {
  public:
-  static const std::error_code kEcDone;
+  static const outcome::std_result<void> kOutcomeDone;
 
   explicit SelectRows(sqlite3_stmt* stmt) noexcept
       : stmt_(stmt) {
@@ -31,7 +31,7 @@ class SelectRows {
 
   ~SelectRows();
 
-  std::error_code NextRow() noexcept;
+  outcome::std_result<void> NextRow() noexcept;
 
   // Column indices are zero-based.
   // Returns nullopt if corresponding cell is NULL.

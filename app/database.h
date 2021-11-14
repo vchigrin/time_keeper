@@ -62,7 +62,7 @@ class Database {
 
     // NOTE: Param instance must be kept alive till statement is finalized,
     // since it uses SQLITE_STATIC bind mode for strings.
-    std::error_code Bind(sqlite3_stmt*, int index) const noexcept;
+    outcome::std_result<void> Bind(sqlite3_stmt*, int index) const noexcept;
 
    private:
     struct NullTag {};
@@ -91,7 +91,8 @@ class Database {
 
  private:
   explicit Database(sqlite3* connection) noexcept;
-  static std::error_code EnsureTablesCreated(sqlite3* connection) noexcept;
+  static outcome::std_result<void> EnsureTablesCreated(
+      sqlite3* connection) noexcept;
 
   sqlite3* connection_ = nullptr;
 };

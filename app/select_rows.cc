@@ -8,7 +8,8 @@
 
 namespace m_time_tracker {
 
-const std::error_code SelectRows::kEcDone = ErrorCodeFromSqlite(SQLITE_DONE);
+const outcome::std_result<void> SelectRows::kOutcomeDone =
+    ErrorCodeFromSqlite(SQLITE_DONE);
 
 SelectRows::~SelectRows() {
   if (stmt_) {
@@ -17,13 +18,15 @@ SelectRows::~SelectRows() {
   }
 }
 
-std::error_code SelectRows::NextRow() noexcept {
+outcome::std_result<void> SelectRows::NextRow() noexcept {
   VERIFY(stmt_);
   const int result = sqlite3_step(stmt_);
   if (result == SQLITE_ROW) {
     // Move succeeded.
-    return std::error_code();
+    return outcome::success();
   }
+  // Don't expect it there. Callers don't know how to handle it in any case.
+  VERIFY(result != SQLITE_OK);
   return ErrorCodeFromSqlite(result);
 }
 
