@@ -11,17 +11,6 @@
 
 namespace m_time_tracker {
 
-namespace {
-
-int EmptyCallback(
-    void*, int /* num_columns */,
-    char** /* column_values */,
-    char** /* column_names */) {
-  return SQLITE_OK;
-}
-
-}  // namespace
-
 // static
 outcome::std_result<Database> Database::Open(
     const std::filesystem::path& db_path) noexcept {
@@ -29,10 +18,6 @@ outcome::std_result<Database> Database::Open(
   const int result = sqlite3_open(db_path.native().c_str(), &connection);
   if (result != SQLITE_OK) {
     return ErrorCodeFromSqlite(result);
-  }
-  const auto create_result = Database::EnsureTablesCreated(connection);
-  if (!create_result) {
-    return create_result.error();
   }
   return Database(connection);
 }
@@ -47,26 +32,6 @@ Database::~Database() {
     const int result = sqlite3_close(connection_);
     VERIFY(result == SQLITE_OK);
   }
-}
-
-// static
-outcome::std_result<void> Database::EnsureTablesCreated(
-    sqlite3* connection) noexcept {
-  char* error_ptr = nullptr;
-  const int result = sqlite3_exec(
-      connection,
-      "CREATE TABLE IF NOT EXISTS Tasks( "
-      "  id INTEGER PRIMARY KEY AUTOINCREMENT, "
-      "  name TEXT NOT NULL, "
-      "  parent_task_id INTEGER, "
-      "  is_archived INTEGER) ",
-      &EmptyCallback,
-      nullptr,
-      &error_ptr);
-  if (result != SQLITE_OK) {
-    return ErrorCodeFromSqlite(result);
-  }
-  return outcome::success();
 }
 
 outcome::std_result<SelectRows> Database::Select(

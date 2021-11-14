@@ -17,6 +17,21 @@ constexpr std::string_view kBaseSelectQuery =
 }  // namespace
 
 // static
+outcome::std_result<void> Task::EnsureTableCreated(Database* db) noexcept {
+  const outcome::std_result<int64_t> res = db->Execute(
+      "CREATE TABLE IF NOT EXISTS Tasks( "
+      "  id INTEGER PRIMARY KEY AUTOINCREMENT, "
+      "  name TEXT NOT NULL, "
+      "  parent_task_id INTEGER, "
+      "  is_archived INTEGER) ",
+      std::unordered_map<std::string, Database::Param>{});
+  if (!res) {
+    return res.error();
+  }
+  return outcome::success();
+}
+
+// static
 // Assumes same column order as specified by kBaseSelectQuery.
 Task Task::CreateFromSelectRow(SelectRows* row) noexcept {
   const std::optional<int64_t> id = row->Int64Column(0);

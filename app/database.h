@@ -91,8 +91,6 @@ class Database {
 
  private:
   explicit Database(sqlite3* connection) noexcept;
-  static outcome::std_result<void> EnsureTablesCreated(
-      sqlite3* connection) noexcept;
 
   sqlite3* connection_ = nullptr;
 };

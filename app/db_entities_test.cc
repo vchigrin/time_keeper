@@ -33,6 +33,8 @@ class DbEntitiesTest : public ::testing::Test {
       VERIFY(false);
     }
     db_.emplace(std::move(maybe_db.value()));
+    auto create_outcome = Task::EnsureTableCreated(db());
+    VERIFY(create_outcome);
   }
 
  protected:

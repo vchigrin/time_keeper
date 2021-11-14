@@ -19,6 +19,7 @@ class Database;
 
 class Task {
  public:
+  static outcome::std_result<void> EnsureTableCreated(Database* db) noexcept;
   static outcome::std_result<std::vector<Task>> LoadAll(Database* db) noexcept;
   static outcome::std_result<std::vector<Task>> LoadTopLevel(
       Database* db) noexcept;
