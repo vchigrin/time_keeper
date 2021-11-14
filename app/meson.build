@@ -1,4 +1,18 @@
-db_entities = library('db_entities',
+gnome = import('gnome')
+
+mobild_time_tracker_resources = gnome.compile_resources(
+   'm-time-tracker-resources',
+   'm-time-tracker.gresources.xml',
+)
+
+resources_lib = static_library('resources_lib',
+                        mobild_time_tracker_resources,
+                        cpp_args: ['-Wno-old-style-cast'],
+                        dependencies : [
+                          gtkmm_dep,
+                        ])
+
+db_entities = static_library('db_entities',
                       'activity.cc',
                       'activity.h',
                       'database.cc',
@@ -18,9 +32,17 @@ db_entities = library('db_entities',
 
 executable('mobile_time_tracker',
            'main.cc',
+           'main_window.cc',
+           'main_window.h',
+           'ui_helpers.h',
            install : true,
+           gui_app: true,
            include_directories : [project_include_dir],
            link_with: db_entities,
+           # link_whole to prevent linker throw away contents of the resource
+           # archive - we interested in "constructor" function that registers
+           # resources in it.
+           link_whole: resources_lib,
            dependencies : [
              gtkmm_dep,
              libhandy_dep,

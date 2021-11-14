@@ -2,12 +2,28 @@
 // Use of this source code is governed by a GPLv3 license that can be
 // found in the LICENSE file.
 
-#include <iostream>
+#include "app/ui_helpers.h"
+#include "app/main_window.h"
 
-#include "app/database.h"
-#include "app/task.h"
+namespace {
 
+void OnStartup() {
+  hdy_init();
+}
 
-int main(int, char*[]) {
-  return 0;
+}  // namespace
+
+int main(int argc, char* argv[]) {
+  auto app = Gtk::Application::create("org.mobile_time_tracker.app");
+  app->signal_startup().connect(&OnStartup);
+
+  Glib::RefPtr<Gtk::Builder> builder = Gtk::Builder::create_from_resource(
+      "/org/mobile_time_tracker/app/main_window.ui");
+  VERIFY(builder);
+
+  std::unique_ptr<m_time_tracker::MainWindow> wnd =
+      m_time_tracker::GetWindowDerived<m_time_tracker::MainWindow>(
+          builder, "main_window");
+
+  return app->run(*wnd, argc, argv);
 }
