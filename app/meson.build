@@ -1,4 +1,6 @@
 db_entities = library('db_entities',
+                      'activity.cc',
+                      'activity.h',
                       'database.cc',
                       'database.h',
                       'error_codes.cc',
