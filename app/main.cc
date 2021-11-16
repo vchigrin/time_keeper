@@ -4,6 +4,7 @@
 
 #include "app/ui_helpers.h"
 #include "app/main_window.h"
+#include "app/db_wrapper.h"
 
 namespace {
 
@@ -21,9 +22,17 @@ int main(int argc, char* argv[]) {
       "/org/mobile_time_tracker/app/main_window.ui");
   VERIFY(builder);
 
+  // TODO(vchigrin): Save DB in permanent location.
+  auto maybe_db_wrapper = m_time_tracker::DbWrapper::Open(":memory:");
+  // TODO(vchigrin): Proper error handling
+  VERIFY(maybe_db_wrapper);
+
+  m_time_tracker::DbWrapper db_wrapper(std::move(maybe_db_wrapper.value()));
+
   std::unique_ptr<m_time_tracker::MainWindow> wnd =
       m_time_tracker::GetWindowDerived<m_time_tracker::MainWindow>(
-          builder, "main_window");
+          builder, "main_window",
+          &db_wrapper);
 
   return app->run(*wnd, argc, argv);
 }

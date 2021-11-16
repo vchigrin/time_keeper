@@ -7,15 +7,20 @@
 #include <string>
 #include <utility>
 
+#include "app/activity.h"
 #include "app/edit_task_dialog.h"
 #include "app/task.h"
 
 namespace m_time_tracker {
 
 MainWindow::MainWindow(
-    GtkWindow* wnd, const Glib::RefPtr<Gtk::Builder>& builder)
+    GtkWindow* wnd,
+    const Glib::RefPtr<Gtk::Builder>& builder,
+    DbWrapper* db_wrapper)
     : Gtk::Window(wnd),
-      resource_builder_(builder) {
+      resource_builder_(builder),
+      db_wrapper_(db_wrapper) {
+  VERIFY(db_wrapper_);
   InitializeWidgetPointers(builder);
   page_stack_->property_visible_child().signal_changed().connect(
       sigc::mem_fun(*this, &MainWindow::OnPageStackVisibleChildChanged));
@@ -25,17 +30,16 @@ MainWindow::MainWindow(
   btn_new_task_->signal_clicked().connect(
       sigc::mem_fun(*this, &MainWindow::OnBtnNewTaskClicked));
 
-  // TODO(vchigrin): Save DB in permanent location.
-  outcome::std_result<Database> maybe_db = Database::Open(":memory:");
-  VERIFY(maybe_db);
-  db_.emplace(std::move(maybe_db.value()));
-  // TODO(vchigrin): This must NOT be in UI code..
-  const auto init_result = Task::EnsureTableCreated(&*db_);
-  VERIFY(init_result);
   RefreshTasksList();
+  task_list_changed_connection_ = db_wrapper_->ConnectToTaskListChanged(
+      [this]() {
+        RefreshTasksList();
+      });
 }
 
-MainWindow::~MainWindow() = default;
+MainWindow::~MainWindow() {
+  task_list_changed_connection_.disconnect();
+}
 
 void MainWindow::InitializeWidgetPointers(
     const Glib::RefPtr<Gtk::Builder>& builder) noexcept {
@@ -64,11 +68,9 @@ void MainWindow::OnBtnNewTaskClicked() noexcept {
   if (edit_task_dialog_->run() == Gtk::RESPONSE_OK) {
     std::string task_name = edit_task_dialog_->task_name();
     Task new_task(std::move(task_name));
-    VERIFY(db_);
-    const auto save_result = new_task.Save(&*db_);
+    const auto save_result = db_wrapper_->SaveTask(&new_task);
     // TODO(vchigrin): Better error handling.
     VERIFY(save_result);
-    RefreshTasksList();
   }
   edit_task_dialog_->hide();
 }

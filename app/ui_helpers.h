@@ -22,19 +22,21 @@
 #endif
 
 #include <memory>
+#include <utility>
 #include "app/verify.h"
 
 namespace m_time_tracker {
 
 // Wraps top-level widget, that must be deleted by application code, and not
 // by Gtk::Builder.
-template<typename T>
+template<typename T, typename... Args>
 std::unique_ptr<T> GetWindowDerived(
     const Glib::RefPtr<Gtk::Builder>& builder,
-    const Glib::ustring& name) noexcept {
+    const Glib::ustring& name,
+    Args&&... args) noexcept {
   T* result = nullptr;
   VERIFY(builder);
-  builder->get_widget_derived(name, result);
+  builder->get_widget_derived(name, result, std::forward<Args>(args)...);
   VERIFY(result);
   return std::unique_ptr<T>(result);
 }

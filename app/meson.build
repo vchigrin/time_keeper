@@ -31,6 +31,8 @@ db_entities = static_library('db_entities',
                       ])
 
 executable('mobile_time_tracker',
+           'db_wrapper.cc',
+           'db_wrapper.h',
            'edit_task_dialog.cc',
            'edit_task_dialog.h',
            'main.cc',

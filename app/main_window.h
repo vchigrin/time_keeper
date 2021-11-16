@@ -5,10 +5,9 @@
 #pragma once
 
 #include <memory>
-#include <optional>
 
 #include "app/ui_helpers.h"
-#include "app/database.h"
+#include "app/db_wrapper.h"
 
 namespace m_time_tracker {
 
@@ -16,7 +15,11 @@ class EditTaskDialog;
 
 class MainWindow : public Gtk::Window {
  public:
-  MainWindow(GtkWindow* wnd, const Glib::RefPtr<Gtk::Builder>& builder);
+  // DbWrapper must outlive this object.
+  MainWindow(
+      GtkWindow* wnd,
+      const Glib::RefPtr<Gtk::Builder>& builder,
+      DbWrapper* db_wrapper);
   ~MainWindow();
 
  private:
@@ -35,8 +38,9 @@ class MainWindow : public Gtk::Window {
   Gtk::Label* lbl_running_time_ = nullptr;
   Gtk::StackSidebar* page_stack_sidebar_ = nullptr;
   Glib::RefPtr<Gtk::Builder> resource_builder_;
-  std::optional<Database> db_;
+  DbWrapper* const db_wrapper_;
   std::unique_ptr<EditTaskDialog> edit_task_dialog_;
+  sigc::connection task_list_changed_connection_;
 };
 
 }  // namespace m_time_tracker
