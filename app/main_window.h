@@ -5,6 +5,7 @@
 #pragma once
 
 #include <memory>
+#include <unordered_map>
 
 #include "app/ui_helpers.h"
 #include "app/db_wrapper.h"
@@ -30,17 +31,24 @@ class MainWindow : public Gtk::Window {
   void OnBtnNewTaskClicked() noexcept;
   void OnPageStackVisibleChildChanged() noexcept;
   void RefreshTasksList() noexcept;
+  void FillListRowFromTask(
+      const Task& t,
+      Gtk::Widget* row_widget) noexcept;
 
   Gtk::Button* btn_menu_ = nullptr;
   Gtk::Button* btn_new_task_ = nullptr;
   Gtk::Stack* main_stack_ = nullptr;
   Gtk::Stack* page_stack_ = nullptr;
   Gtk::Label* lbl_running_time_ = nullptr;
+  Gtk::ListBox* lst_edit_tasks_ = nullptr;
   Gtk::StackSidebar* page_stack_sidebar_ = nullptr;
   Glib::RefPtr<Gtk::Builder> resource_builder_;
   DbWrapper* const db_wrapper_;
   std::unique_ptr<EditTaskDialog> edit_task_dialog_;
   sigc::connection task_list_changed_connection_;
+  // Values - HdyPreferencesRow.
+  std::unordered_map<int64_t, std::unique_ptr<Gtk::Widget>>
+     task_id_to_lst_tasks_items_;
 };
 
 }  // namespace m_time_tracker
