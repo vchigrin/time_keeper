@@ -11,9 +11,38 @@
 
 #include "app/activity.h"
 #include "app/edit_task_dialog.h"
+#include "app/task_list_model_base.h"
 #include "app/task.h"
 
 namespace m_time_tracker {
+
+namespace {
+
+class EditTaskListModel : public TaskListModelBase {
+ protected:
+  friend class TaskListModelBase;
+  explicit EditTaskListModel(DbWrapper* db_wrapper) noexcept
+      : TaskListModelBase(db_wrapper) {
+    auto maybe_all_tasks = Task::LoadAll(&db_wrapper->db_for_read_only());
+    VERIFY(maybe_all_tasks);
+    Initialize(maybe_all_tasks.value());
+  }
+
+  Glib::RefPtr<Gtk::Widget> CreateRowFromTask(const Task& t) noexcept override;
+};
+
+Glib::RefPtr<Gtk::Widget> EditTaskListModel::CreateRowFromTask(
+    const Task& t) noexcept {
+  Glib::RefPtr<Gtk::Widget> wrapped_row(Glib::wrap(hdy_action_row_new()));
+  wrapped_row->show();
+  const std::string& title = t.name();
+  hdy_preferences_row_set_title(
+      reinterpret_cast<HdyPreferencesRow*>(wrapped_row->gobj()),
+      title.c_str());
+  return wrapped_row;
+}
+
+}  // namespace
 
 MainWindow::MainWindow(
     GtkWindow* wnd,
@@ -31,17 +60,14 @@ MainWindow::MainWindow(
       sigc::mem_fun(*this, &MainWindow::OnBtnMenuClicked));
   btn_new_task_->signal_clicked().connect(
       sigc::mem_fun(*this, &MainWindow::OnBtnNewTaskClicked));
-
-  RefreshTasksList();
-  task_list_changed_connection_ = db_wrapper_->ConnectToTaskListChanged(
-      [this]() {
-        RefreshTasksList();
-      });
+  Glib::RefPtr<EditTaskListModel> edit_tasks_model =
+      TaskListModelBase::create<EditTaskListModel>(db_wrapper_);
+  lst_edit_tasks_->bind_model(
+      edit_tasks_model,
+      edit_tasks_model->slot_create_widget());
 }
 
-MainWindow::~MainWindow() {
-  task_list_changed_connection_.disconnect();
-}
+MainWindow::~MainWindow() = default;
 
 void MainWindow::InitializeWidgetPointers(
     const Glib::RefPtr<Gtk::Builder>& builder) noexcept {
@@ -81,48 +107,6 @@ void MainWindow::OnBtnNewTaskClicked() noexcept {
 
 void MainWindow::OnPageStackVisibleChildChanged() noexcept {
   main_stack_->set_visible_child(*page_stack_);
-}
-
-void MainWindow::RefreshTasksList() noexcept {
-  auto maybe_all_tasks = Task::LoadAll(
-      &db_wrapper_->db_for_read_only());
-  VERIFY(maybe_all_tasks);
-  const std::vector<Task>& tasks = maybe_all_tasks.value();
-  for (const Task& t : tasks) {
-    VERIFY(t.id());
-    const int64_t task_id = *t.id();
-    if (auto it = task_id_to_lst_tasks_items_.find(task_id);
-        it != task_id_to_lst_tasks_items_.end()) {
-      FillListRowFromTask(t, it->second.get());
-    } else {
-      std::unique_ptr<Gtk::Widget> wrapped_row(
-          Glib::wrap(hdy_action_row_new()));
-      wrapped_row->show();
-      FillListRowFromTask(t, wrapped_row.get());
-      lst_edit_tasks_->add(*wrapped_row);
-      task_id_to_lst_tasks_items_.insert({task_id, std::move(wrapped_row)});
-    }
-  }
-  std::unordered_set<int64_t> actual_task_ids;
-  for (const Task& t : tasks) {
-    VERIFY(actual_task_ids.insert(*t.id()).second);
-  }
-  for (auto it = task_id_to_lst_tasks_items_.begin();
-      it != task_id_to_lst_tasks_items_.end(); ) {
-    if (actual_task_ids.count(it->first)) {
-      ++it;
-    } else {
-      it = task_id_to_lst_tasks_items_.erase(it);
-    }
-  }
-}
-
-void MainWindow::FillListRowFromTask(
-    const Task& t,
-    Gtk::Widget* row_widget) noexcept {
-  const std::string& title = t.name();
-  hdy_preferences_row_set_title(
-      reinterpret_cast<HdyPreferencesRow*>(row_widget->gobj()), title.c_str());
 }
 
 }  // namespace m_time_tracker

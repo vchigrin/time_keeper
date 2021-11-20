@@ -27,9 +27,14 @@ outcome::std_result<DbWrapper> DbWrapper::Open(
 
 outcome::std_result<void> DbWrapper::SaveTask(Task* task) noexcept {
   VERIFY(task);
+  const bool was_saved = (task->id() != std::nullopt);
   outcome::std_result<void> save_result = task->Save(&db_);
   if (save_result) {
-    signal_task_list_changed_.emit();
+    if (was_saved) {
+      sig_existing_task_changed_(*task);
+    } else {
+      sig_after_task_added_(*task);
+    }
   }
   return save_result;
 }
