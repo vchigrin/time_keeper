@@ -173,10 +173,32 @@ void MainWindow::EditTask(Task* task) noexcept {
       GetWindowDerived<EditTaskDialog>(resource_builder_, "edit_task_dialog");
   }
   edit_task_dialog_->set_task(task);
-  if (edit_task_dialog_->run() == Gtk::RESPONSE_OK) {
+  while (true) {
+    if (edit_task_dialog_->run() != Gtk::RESPONSE_OK) {
+      break;
+    }
+    // Check for already present task with that name.
+    outcome::std_result<Task> maybe_conflicting_task = Task::LoadByName(
+        &db_wrapper_->db_for_read_only(),
+        task->name());
+    if (maybe_conflicting_task &&
+        maybe_conflicting_task.value().id() != task->id()) {
+      Gtk::MessageDialog message_dlg(
+          *this,
+          // TODO(vchigrin): Localization.
+          "Error - this name already used by another task",
+          /* use_markup */ false,
+          Gtk::MESSAGE_ERROR,
+          Gtk::BUTTONS_OK,
+          /* modal */ true);
+      message_dlg.run();
+      continue;
+    }
+
     const auto save_result = db_wrapper_->SaveTask(task);
     // TODO(vchigrin): Better error handling.
     VERIFY(save_result);
+    break;
   }
   // Ensure we'll never produce dangling pointers.
   edit_task_dialog_->set_task(nullptr);

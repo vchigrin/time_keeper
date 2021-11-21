@@ -35,7 +35,8 @@ Database::~Database() {
 }
 
 outcome::std_result<SelectRows> Database::Select(
-    std::string_view query) noexcept {
+    std::string_view query,
+    const std::unordered_map<std::string, Param>& params) noexcept {
   VERIFY(connection_);  // Check that we're not moved-from.
   sqlite3_stmt* stmt = nullptr;
   const int result = sqlite3_prepare_v2(
@@ -47,6 +48,21 @@ outcome::std_result<SelectRows> Database::Select(
   if (result != SQLITE_OK) {
     return ErrorCodeFromSqlite(result);
   }
+  for (const auto& [key, value] : params) {
+    const int index = sqlite3_bind_parameter_index(stmt, key.c_str());
+    if (index == 0) {
+      const int result = sqlite3_finalize(stmt);
+      VERIFY(result == SQLITE_OK);
+      return ErrorCodes::kUnknownDbParameterName;
+    }
+    const outcome::std_result<void> bind_result = value.Bind(stmt, index);
+    if (!bind_result) {
+      const int result = sqlite3_finalize(stmt);
+      VERIFY(result == SQLITE_OK);
+      return bind_result.error();
+    }
+  }
+
   return SelectRows(stmt);
 }
 

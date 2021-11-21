@@ -82,7 +82,9 @@ class Database {
 
   // Returned SelectRows is on position "before first" row.
   // Client should call |NextRow()| at least once on it.
-  outcome::std_result<SelectRows> Select(std::string_view query) noexcept;
+  outcome::std_result<SelectRows> Select(
+      std::string_view query,
+      const std::unordered_map<std::string, Param>& params = {}) noexcept;
 
   // Returns last insert rowid.
   outcome::std_result<int64_t> Execute(

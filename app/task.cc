@@ -21,7 +21,7 @@ outcome::std_result<void> Task::EnsureTableCreated(Database* db) noexcept {
   const outcome::std_result<int64_t> res = db->Execute(
       "CREATE TABLE IF NOT EXISTS Tasks( "
       "  id INTEGER PRIMARY KEY AUTOINCREMENT, "
-      "  name TEXT NOT NULL, "
+      "  name TEXT UNIQUE NOT NULL, "
       "  parent_task_id INTEGER, "
       "  is_archived INTEGER) ",
       std::unordered_map<std::string, Database::Param>{});
@@ -79,6 +79,26 @@ outcome::std_result<Task> Task::LoadById(Database* db, int64_t id) noexcept {
 }
 
 // static
+outcome::std_result<Task> Task::LoadByName(
+    Database* db, const std::string& name) noexcept {
+  const std::string query = std::string(kBaseSelectQuery) +
+      " WHERE name=:name";
+  const std::unordered_map<std::string, Database::Param> params = {
+    {":name", Database::Param(name)},
+  };
+  auto maybe_tasks = LoadWithQuery(db, query, params);
+  if (!maybe_tasks) {
+    return maybe_tasks.error();
+  }
+  const std::vector<Task>& tasks = maybe_tasks.value();
+  VERIFY(tasks.size() <= 1);
+  if (tasks.empty()) {
+    return ErrorCodes::kEmptyResults;
+  }
+  return tasks[0];
+}
+
+// static
 outcome::std_result<std::vector<Task>> Task::LoadTopLevel(
     Database* db) noexcept {
   const std::string query = std::string(kBaseSelectQuery) +
@@ -97,8 +117,9 @@ outcome::std_result<std::vector<Task>> Task::LoadChildTasks(
 
 // static
 outcome::std_result<std::vector<Task>> Task::LoadWithQuery(
-    Database* db, std::string_view query) noexcept {
-  auto maybe_rows = db->Select(query);
+    Database* db, std::string_view query,
+    const std::unordered_map<std::string, Database::Param>& params) noexcept {
+  auto maybe_rows = db->Select(query, params);
   if (!maybe_rows) {
     return maybe_rows.error();
   }

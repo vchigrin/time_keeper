@@ -6,16 +6,16 @@
 
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include "app/database.h"
 #include "app/error_codes.h"
 #include "app/select_rows.h"
 #include "app/verify.h"
 
 namespace m_time_tracker {
-
-class Database;
 
 class Task {
  public:
@@ -24,6 +24,8 @@ class Task {
   static outcome::std_result<std::vector<Task>> LoadNotArchived(
       Database* db) noexcept;
   static outcome::std_result<Task> LoadById(Database* db, int64_t id) noexcept;
+  static outcome::std_result<Task> LoadByName(
+      Database* db, const std::string& name) noexcept;
   static outcome::std_result<std::vector<Task>> LoadTopLevel(
       Database* db) noexcept;
   static outcome::std_result<std::vector<Task>> LoadChildTasks(
@@ -75,7 +77,9 @@ class Task {
   }
   static Task CreateFromSelectRow(SelectRows* row) noexcept;
   static outcome::std_result<std::vector<Task>> LoadWithQuery(
-      Database* db, std::string_view query) noexcept;
+      Database* db, std::string_view query,
+      const std::unordered_map<
+          std::string, Database::Param>& params = {}) noexcept;
 
   std::optional<int64_t> id_;
   std::string name_;

@@ -18,6 +18,8 @@ std::string CustomErrorCategory::message(int c) const {
       return "No error";
     case ErrorCodes::kUnknownDbParameterName:
       return "Unknown DB parameter name";
+    case ErrorCodes::kEmptyResults:
+      return "Result set is empty";
     default:
       NOTREACHED();
   }
