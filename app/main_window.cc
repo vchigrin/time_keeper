@@ -109,7 +109,11 @@ void MainWindow::InitializeWidgetPointers(
 }
 
 void MainWindow::OnBtnMenuClicked() noexcept {
-  main_stack_->set_visible_child(*page_stack_sidebar_);
+  if (main_stack_->get_visible_child() == page_stack_) {
+    main_stack_->set_visible_child(*page_stack_sidebar_);
+  } else {
+    main_stack_->set_visible_child(*page_stack_);
+  }
 }
 
 void MainWindow::OnBtnNewTaskClicked() noexcept {
