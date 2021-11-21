@@ -28,7 +28,11 @@ class EditTaskDialog : public Gtk::Dialog {
   void on_show() override;
 
  private:
+  void OnTaskNameChange() noexcept;
+  std::string GetTrimmedEditText() noexcept;
+
   Gtk::Entry* edt_task_name_ = nullptr;
+  Gtk::Button* btn_ok_ = nullptr;
   std::string task_name_;
 };
 
