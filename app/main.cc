@@ -10,6 +10,12 @@ namespace {
 
 void OnStartup() {
   hdy_init();
+  Glib::RefPtr<Gtk::CssProvider> css_provider = Gtk::CssProvider::create();
+  css_provider->load_from_resource("/org/mobile_time_tracker/app/style.css");
+  Gtk::StyleContext::add_provider_for_screen(
+      Gdk::Screen::get_default(),
+      css_provider,
+      GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 }
 
 }  // namespace

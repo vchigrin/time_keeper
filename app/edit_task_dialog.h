@@ -8,6 +8,7 @@
 #include <utility>
 
 #include "app/ui_helpers.h"
+#include "app/task.h"
 
 namespace m_time_tracker {
 
@@ -15,12 +16,8 @@ class EditTaskDialog : public Gtk::Dialog {
  public:
   EditTaskDialog(GtkDialog* dlg, const Glib::RefPtr<Gtk::Builder>& builder);
 
-  const std::string& task_name() const noexcept {
-    return task_name_;
-  }
-
-  void set_task_name(std::string new_name) noexcept {
-    task_name_ = std::move(new_name);
+  void set_task(Task* task) noexcept {
+    task_ = task;
   }
 
  protected:
@@ -33,7 +30,8 @@ class EditTaskDialog : public Gtk::Dialog {
 
   Gtk::Entry* edt_task_name_ = nullptr;
   Gtk::Button* btn_ok_ = nullptr;
-  std::string task_name_;
+  Gtk::CheckButton* chk_archived_ = nullptr;
+  Task* task_ = nullptr;
 };
 
 }  // namespace m_time_tracker

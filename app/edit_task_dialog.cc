@@ -13,19 +13,24 @@ EditTaskDialog::EditTaskDialog(
     : Gtk::Dialog(dlg) {
   edt_task_name_ = GetWidgetChecked<Gtk::Entry>(builder, "edt_task_name");
   btn_ok_ = GetWidgetChecked<Gtk::Button>(builder, "btn_ok");
+  chk_archived_ = GetWidgetChecked<Gtk::CheckButton>(builder, "chk_archived");
   edt_task_name_->signal_changed().connect(
       sigc::mem_fun(*this, &EditTaskDialog::OnTaskNameChange));
 }
 
 void EditTaskDialog::on_response(int response_id) {
-  if (response_id == Gtk::RESPONSE_OK) {
-    task_name_ = GetTrimmedEditText();
+  if (response_id == Gtk::RESPONSE_OK && task_) {
+    task_->set_name(GetTrimmedEditText());
+    task_->set_archived(chk_archived_->get_active());
   }
 }
 
 void EditTaskDialog::on_show() {
   Gtk::Dialog::on_show();
-  edt_task_name_->set_text(task_name_);
+  if (task_) {
+    edt_task_name_->set_text(task_->name());
+    chk_archived_->set_active(task_->is_archived());
+  }
   OnTaskNameChange();
 }
 

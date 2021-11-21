@@ -63,6 +63,12 @@ Glib::RefPtr<Gtk::Widget> EditTaskListModel::CreateRowFromTask(
   });
   wrapped_row->add(*btn_edit);
 
+  if (t.is_archived()) {
+    Glib::RefPtr<Gtk::StyleContext> style_context =
+        wrapped_row->get_style_context();
+    style_context->add_class("archived");
+  }
+
   wrapped_row->show();
   return wrapped_row;
 }
@@ -128,13 +134,14 @@ void MainWindow::EditTask(Task* task) noexcept {
     edit_task_dialog_ =
       GetWindowDerived<EditTaskDialog>(resource_builder_, "edit_task_dialog");
   }
-  edit_task_dialog_->set_task_name(task->name());
+  edit_task_dialog_->set_task(task);
   if (edit_task_dialog_->run() == Gtk::RESPONSE_OK) {
-    task->set_name(edit_task_dialog_->task_name());
     const auto save_result = db_wrapper_->SaveTask(task);
     // TODO(vchigrin): Better error handling.
     VERIFY(save_result);
   }
+  // Ensure we'll never produce dangling pointers.
+  edit_task_dialog_->set_task(nullptr);
   edit_task_dialog_->hide();
 }
 

@@ -1,0 +1,3 @@
+.archived > * > box > label.title {
+  text-decoration-line: line-through;
+}
