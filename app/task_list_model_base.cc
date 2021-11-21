@@ -42,18 +42,31 @@ void TaskListModelBase::Initialize(const std::vector<Task>& tasks) noexcept {
 void TaskListModelBase::ExistingTaskChanged(const Task& t) noexcept {
   VERIFY(t.id());
   auto it = task_id_to_item_index_.find(*t.id());
-  VERIFY(it != task_id_to_item_index_.end());
-
-  const guint item_position = it->second;
+  guint item_position = 0;
+  if (it != task_id_to_item_index_.end()) {
+    item_position = it->second;
+    RemoveUpdatingIndices(item_position);
+  } else {
+    item_position = get_n_items();
+  }
 
   auto new_control = CreateRowFromTask(t);
-  remove(item_position);
-  insert(item_position, new_control);
+  if (new_control) {
+    InsertUpdatindIndeces(item_position, new_control);
+    task_id_to_item_index_[*t.id()] = item_position;
+  } else {
+    if (it != task_id_to_item_index_.end()) {
+      task_id_to_item_index_.erase(it);
+    }
+  }
 }
 
 void TaskListModelBase::AfterTaskAdded(const Task& t) noexcept {
-  Glib::RefPtr<Gtk::Widget> new_control = CreateRowFromTask(t);
   VERIFY(t.id());
+  Glib::RefPtr<Gtk::Widget> new_control = CreateRowFromTask(t);
+  if (!new_control) {
+    return;
+  }
   const guint new_item_index = get_n_items();
   const auto insert_result = task_id_to_item_index_.insert(
       {*t.id(), new_item_index});
@@ -64,9 +77,29 @@ void TaskListModelBase::AfterTaskAdded(const Task& t) noexcept {
 void TaskListModelBase::BeforeTaskDeleted(const Task& t) noexcept {
   VERIFY(t.id());
   auto it = task_id_to_item_index_.find(*t.id());
-  VERIFY(it != task_id_to_item_index_.end());
-  remove(it->second);
-  task_id_to_item_index_.erase(it);
+  if (it != task_id_to_item_index_.end()) {
+    RemoveUpdatingIndices(it->second);
+    task_id_to_item_index_.erase(it);
+  }
+}
+
+void TaskListModelBase::InsertUpdatindIndeces(
+    guint position, const Glib::RefPtr<Gtk::Widget>& control) noexcept {
+  insert(position, control);
+  for (auto& [task_id, task_pos] : task_id_to_item_index_) {
+    if (task_pos >= position) {
+      ++task_pos;
+    }
+  }
+}
+
+void TaskListModelBase::RemoveUpdatingIndices(guint position) noexcept {
+  remove(position);
+  for (auto& [task_id, task_pos] : task_id_to_item_index_) {
+    if (task_pos > position) {
+      --task_pos;
+    }
+  }
 }
 
 }  // namespace m_time_tracker

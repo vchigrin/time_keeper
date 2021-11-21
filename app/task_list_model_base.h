@@ -38,6 +38,8 @@ class TaskListModelBase: public Gio::ListStore<Gtk::Widget> {
  protected:
   explicit TaskListModelBase(DbWrapper* db_wrapper) noexcept;
 
+  // May return nullptr if this Task must not be displayed in current
+  // list view.
   virtual Glib::RefPtr<Gtk::Widget> CreateRowFromTask(
       const Task& t) noexcept = 0;
 
@@ -47,6 +49,12 @@ class TaskListModelBase: public Gio::ListStore<Gtk::Widget> {
   void ExistingTaskChanged(const Task& t) noexcept;
   void AfterTaskAdded(const Task& t) noexcept;
   void BeforeTaskDeleted(const Task& t) noexcept;
+  void InsertUpdatindIndeces(
+      guint position, const Glib::RefPtr<Gtk::Widget>& control) noexcept;
+  // Item in |task_id_to_item_index_|, describing modified element,
+  // is not touched. All items with greater positions are updated.
+  void RemoveUpdatingIndices(guint position) noexcept;
+
   Gtk::Widget* CreateWidget(const Glib::RefPtr<Glib::Object> obj) noexcept {
     // Caller responsible on releasing reference.
     obj->reference();

@@ -44,6 +44,20 @@ class EditTaskListModel : public TaskListModelBase {
   MainWindow* const main_window_;
 };
 
+class TaskListModel : public TaskListModelBase {
+ protected:
+  friend class TaskListModelBase;
+  explicit TaskListModel(DbWrapper* db_wrapper) noexcept
+      : TaskListModelBase(db_wrapper) {
+    auto maybe_tasks = Task::LoadNotArchived(
+        &db_wrapper->db_for_read_only());
+    VERIFY(maybe_tasks);
+    Initialize(maybe_tasks.value());
+  }
+
+  Glib::RefPtr<Gtk::Widget> CreateRowFromTask(const Task& t) noexcept override;
+};
+
 Glib::RefPtr<Gtk::Widget> EditTaskListModel::CreateRowFromTask(
     const Task& t) noexcept {
   GtkListBoxRow* row = reinterpret_cast<GtkListBoxRow*>(hdy_action_row_new());
@@ -73,6 +87,24 @@ Glib::RefPtr<Gtk::Widget> EditTaskListModel::CreateRowFromTask(
   return wrapped_row;
 }
 
+Glib::RefPtr<Gtk::Widget> TaskListModel::CreateRowFromTask(
+    const Task& t) noexcept {
+  if (t.is_archived()) {
+    // May be if task was changed.
+    return Glib::RefPtr<Gtk::Widget>();
+  }
+  GtkListBoxRow* row = reinterpret_cast<GtkListBoxRow*>(hdy_action_row_new());
+  g_object_ref_sink(row);
+  Glib::RefPtr<Gtk::ListBoxRow> wrapped_row(Glib::wrap(row));
+
+  const std::string& title = t.name();
+  hdy_preferences_row_set_title(
+      reinterpret_cast<HdyPreferencesRow*>(wrapped_row->gobj()),
+      title.c_str());
+  wrapped_row->show();
+  return wrapped_row;
+}
+
 }  // namespace
 
 MainWindow::MainWindow(
@@ -96,6 +128,11 @@ MainWindow::MainWindow(
   lst_edit_tasks_->bind_model(
       edit_tasks_model,
       edit_tasks_model->slot_create_widget());
+  Glib::RefPtr<TaskListModel> tasks_model =
+      TaskListModelBase::create<TaskListModel>(db_wrapper_);
+  lst_tasks_->bind_model(
+      tasks_model,
+      tasks_model->slot_create_widget());
 }
 
 MainWindow::~MainWindow() = default;
@@ -112,6 +149,7 @@ void MainWindow::InitializeWidgetPointers(
       builder, "lbl_running_time");
   lst_edit_tasks_ = GetWidgetChecked<Gtk::ListBox>(
       builder, "lst_edit_tasks");
+  lst_tasks_ = GetWidgetChecked<Gtk::ListBox>(builder, "lst_tasks");
 }
 
 void MainWindow::OnBtnMenuClicked() noexcept {

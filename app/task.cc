@@ -55,6 +55,14 @@ outcome::std_result<std::vector<Task>> Task::LoadAll(Database* db) noexcept {
 }
 
 // static
+outcome::std_result<std::vector<Task>> Task::LoadNotArchived(
+    Database* db) noexcept {
+  const std::string query = std::string(kBaseSelectQuery) +
+      " WHERE is_archived=0";
+  return LoadWithQuery(db, query);
+}
+
+// static
 outcome::std_result<Task> Task::LoadById(Database* db, int64_t id) noexcept {
   const std::string query = std::string(kBaseSelectQuery) +
       " WHERE id=" + std::to_string(id);

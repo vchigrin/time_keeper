@@ -39,6 +39,7 @@ class MainWindow : public Gtk::Window {
   Gtk::Stack* page_stack_ = nullptr;
   Gtk::Label* lbl_running_time_ = nullptr;
   Gtk::ListBox* lst_edit_tasks_ = nullptr;
+  Gtk::ListBox* lst_tasks_ = nullptr;
   Gtk::StackSidebar* page_stack_sidebar_ = nullptr;
   Glib::RefPtr<Gtk::Builder> resource_builder_;
   DbWrapper* const db_wrapper_;
