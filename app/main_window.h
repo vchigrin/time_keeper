@@ -22,6 +22,8 @@ class MainWindow : public Gtk::Window {
       DbWrapper* db_wrapper);
   ~MainWindow();
 
+  void EditTask(Task* task) noexcept;
+
  private:
   void InitializeWidgetPointers(
       const Glib::RefPtr<Gtk::Builder>& builder) noexcept;

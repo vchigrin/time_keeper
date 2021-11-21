@@ -55,6 +55,22 @@ outcome::std_result<std::vector<Task>> Task::LoadAll(Database* db) noexcept {
 }
 
 // static
+outcome::std_result<Task> Task::LoadById(Database* db, int64_t id) noexcept {
+  const std::string query = std::string(kBaseSelectQuery) +
+      " WHERE id=" + std::to_string(id);
+  auto maybe_tasks = LoadWithQuery(db, query);
+  if (!maybe_tasks) {
+    return maybe_tasks.error();
+  }
+  const std::vector<Task>& tasks = maybe_tasks.value();
+  VERIFY(tasks.size() <= 1);
+  if (tasks.empty()) {
+    return ErrorCodes::kEmptyResults;
+  }
+  return tasks[0];
+}
+
+// static
 outcome::std_result<std::vector<Task>> Task::LoadTopLevel(
     Database* db) noexcept {
   const std::string query = std::string(kBaseSelectQuery) +

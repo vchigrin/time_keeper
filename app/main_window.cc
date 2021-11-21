@@ -21,24 +21,49 @@ namespace {
 class EditTaskListModel : public TaskListModelBase {
  protected:
   friend class TaskListModelBase;
-  explicit EditTaskListModel(DbWrapper* db_wrapper) noexcept
-      : TaskListModelBase(db_wrapper) {
+  EditTaskListModel(DbWrapper* db_wrapper, MainWindow* main_window) noexcept
+      : TaskListModelBase(db_wrapper),
+        db_wrapper_(db_wrapper),
+        main_window_(main_window) {
     auto maybe_all_tasks = Task::LoadAll(&db_wrapper->db_for_read_only());
     VERIFY(maybe_all_tasks);
     Initialize(maybe_all_tasks.value());
+    VERIFY(main_window_);
   }
 
   Glib::RefPtr<Gtk::Widget> CreateRowFromTask(const Task& t) noexcept override;
+
+ private:
+  void EditTask(int64_t task_id) {
+    auto maybe_task = Task::LoadById(
+        &db_wrapper_->db_for_read_only(), task_id);
+    VERIFY(maybe_task);
+    main_window_->EditTask(&maybe_task.value());
+  }
+  DbWrapper* const db_wrapper_;
+  MainWindow* const main_window_;
 };
 
 Glib::RefPtr<Gtk::Widget> EditTaskListModel::CreateRowFromTask(
     const Task& t) noexcept {
-  Glib::RefPtr<Gtk::Widget> wrapped_row(Glib::wrap(hdy_action_row_new()));
-  wrapped_row->show();
+  GtkListBoxRow* row = reinterpret_cast<GtkListBoxRow*>(hdy_action_row_new());
+  g_object_ref_sink(row);
+  Glib::RefPtr<Gtk::ListBoxRow> wrapped_row(Glib::wrap(row));
+
   const std::string& title = t.name();
   hdy_preferences_row_set_title(
       reinterpret_cast<HdyPreferencesRow*>(wrapped_row->gobj()),
       title.c_str());
+  Gtk::Button* btn_edit = manage(new Gtk::Button());
+  btn_edit->set_image_from_icon_name("gtk-edit");
+  btn_edit->show();
+  VERIFY(t.id());
+  btn_edit->signal_clicked().connect([this, task_id = *t.id()]() {
+    EditTask(task_id);
+  });
+  wrapped_row->add(*btn_edit);
+
+  wrapped_row->show();
   return wrapped_row;
 }
 
@@ -61,7 +86,7 @@ MainWindow::MainWindow(
   btn_new_task_->signal_clicked().connect(
       sigc::mem_fun(*this, &MainWindow::OnBtnNewTaskClicked));
   Glib::RefPtr<EditTaskListModel> edit_tasks_model =
-      TaskListModelBase::create<EditTaskListModel>(db_wrapper_);
+      TaskListModelBase::create<EditTaskListModel>(db_wrapper_, this);
   lst_edit_tasks_->bind_model(
       edit_tasks_model,
       edit_tasks_model->slot_create_widget());
@@ -88,17 +113,21 @@ void MainWindow::OnBtnMenuClicked() noexcept {
 }
 
 void MainWindow::OnBtnNewTaskClicked() noexcept {
+  Task new_task{std::string()};
+  EditTask(&new_task);
+}
+
+void MainWindow::EditTask(Task* task) noexcept {
   if (!edit_task_dialog_) {
     // Create dialog just once, then re-use it. If we destoy it GtkBuilder
     // will still attempt to return reference to the old object.
     edit_task_dialog_ =
       GetWindowDerived<EditTaskDialog>(resource_builder_, "edit_task_dialog");
   }
-  edit_task_dialog_->set_task_name(std::string());
+  edit_task_dialog_->set_task_name(task->name());
   if (edit_task_dialog_->run() == Gtk::RESPONSE_OK) {
-    std::string task_name = edit_task_dialog_->task_name();
-    Task new_task(std::move(task_name));
-    const auto save_result = db_wrapper_->SaveTask(&new_task);
+    task->set_name(edit_task_dialog_->task_name());
+    const auto save_result = db_wrapper_->SaveTask(task);
     // TODO(vchigrin): Better error handling.
     VERIFY(save_result);
   }
