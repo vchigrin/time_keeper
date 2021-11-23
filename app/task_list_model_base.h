@@ -35,6 +35,8 @@ class TaskListModelBase: public Gio::ListStore<Gtk::Widget> {
     return Glib::RefPtr<ChildClass>(result);
   }
 
+  std::optional<int64_t> FindTaskIdForRow(Gtk::ListBoxRow*) noexcept;
+
  protected:
   explicit TaskListModelBase(DbWrapper* db_wrapper) noexcept;
 
@@ -46,6 +48,8 @@ class TaskListModelBase: public Gio::ListStore<Gtk::Widget> {
   void Initialize(const std::vector<Task>& tasks) noexcept;
 
  private:
+  Glib::RefPtr<Gtk::Widget> DoCreateRowFromTask(const Task& t) noexcept;
+
   void ExistingTaskChanged(const Task& t) noexcept;
   void AfterTaskAdded(const Task& t) noexcept;
   void BeforeTaskDeleted(const Task& t) noexcept;
@@ -60,6 +64,8 @@ class TaskListModelBase: public Gio::ListStore<Gtk::Widget> {
     obj->reference();
     return static_cast<Gtk::Widget*>(obj.get());
   }
+
+  static const Glib::Quark task_id_quark_;
 
   std::unordered_map<int64_t, guint> task_id_to_item_index_;
 

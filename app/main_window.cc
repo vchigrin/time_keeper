@@ -128,13 +128,15 @@ MainWindow::MainWindow(
   lst_edit_tasks_->bind_model(
       edit_tasks_model,
       edit_tasks_model->slot_create_widget());
-  Glib::RefPtr<TaskListModel> tasks_model =
-      TaskListModelBase::create<TaskListModel>(db_wrapper_);
+  task_list_model_ = TaskListModelBase::create<TaskListModel>(db_wrapper_);
   lst_tasks_->bind_model(
-      tasks_model,
-      tasks_model->slot_create_widget());
+      task_list_model_,
+      task_list_model_->slot_create_widget());
+  lst_tasks_->signal_row_selected().connect(
+      sigc::mem_fun(*this, &MainWindow::OnLstTasksRowSelected));
   btn_start_stop_->signal_clicked().connect(
       sigc::mem_fun(*this, &MainWindow::OnBtnStartStopClicked));
+  UpdateBtnStartStop(false);
 }
 
 MainWindow::~MainWindow() = default;
@@ -220,6 +222,34 @@ void MainWindow::OnBtnStartStopClicked() noexcept {
     child->property_icon_name() = "media-playback-stop-symbolic";
   } else {
     child->property_icon_name() = "media-playback-start-symbolic";
+  }
+}
+
+void MainWindow::OnLstTasksRowSelected(
+    Gtk::ListBoxRow* selected_row) noexcept {
+  std::optional<int64_t> task_id = std::nullopt;
+  if (selected_row) {
+    task_id = task_list_model_->FindTaskIdForRow(selected_row);
+    VERIFY(task_id);
+    auto maybe_task = Task::LoadById(
+        &db_wrapper_->db_for_read_only(), *task_id);
+    VERIFY(maybe_task);
+    lbl_running_time_->set_text(maybe_task.value().name());
+  } else {
+    // TODO(vchigrin): Disallow archiving or changing running tasks.
+    lbl_running_time_->set_text("None");
+  }
+  UpdateBtnStartStop(task_id != std::nullopt);
+}
+
+void MainWindow::UpdateBtnStartStop(bool task_selected) noexcept {
+  if (task_selected) {
+    btn_start_stop_->set_sensitive(true);
+  } else {
+    // TODO(vchigrin): Disallow archiving or changing running tasks.
+    if (!is_task_running_) {
+      btn_start_stop_->set_sensitive(false);
+    }
   }
 }
 

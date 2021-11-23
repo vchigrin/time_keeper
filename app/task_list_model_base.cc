@@ -10,6 +10,9 @@
 
 namespace m_time_tracker {
 
+// static
+const Glib::Quark TaskListModelBase::task_id_quark_("task-list-task-id");
+
 TaskListModelBase::TaskListModelBase(DbWrapper* db_wrapper) noexcept {
   all_connections_.emplace_back(db_wrapper->ConnectExistingTaskChanged(
       sigc::mem_fun(*this, &TaskListModelBase::ExistingTaskChanged)));
@@ -25,13 +28,29 @@ TaskListModelBase::~TaskListModelBase() {
   }
 }
 
+Glib::RefPtr<Gtk::Widget> TaskListModelBase::DoCreateRowFromTask(
+    const Task& t) noexcept {
+  auto new_control = CreateRowFromTask(t);
+  if (!new_control) {
+    return new_control;
+  }
+  auto delete_id = [](gpointer ptr) {
+    delete reinterpret_cast<int64_t*>(ptr);
+  };
+  // We have to copy data in pointer rather then store id as pointer,
+  // since Task interface allows zero id, that we can not distinguish
+  // from control without data.
+  new_control->set_data(task_id_quark_, new int64_t(*t.id()), delete_id);
+  return new_control;
+}
+
 void TaskListModelBase::Initialize(const std::vector<Task>& tasks) noexcept {
   VERIFY(task_id_to_item_index_.empty());
   std::vector<Glib::RefPtr<Gtk::Widget>> items;
   items.reserve(tasks.size());
   for (const Task& t : tasks) {
     VERIFY(t.id());
-    auto control = CreateRowFromTask(t);
+    auto control = DoCreateRowFromTask(t);
     VERIFY(control);
     items.push_back(std::move(control));
     VERIFY(task_id_to_item_index_.insert({*t.id(), items.size()}).second);
@@ -50,7 +69,7 @@ void TaskListModelBase::ExistingTaskChanged(const Task& t) noexcept {
     item_position = get_n_items();
   }
 
-  auto new_control = CreateRowFromTask(t);
+  auto new_control = DoCreateRowFromTask(t);
   if (new_control) {
     InsertUpdatindIndeces(item_position, new_control);
     task_id_to_item_index_[*t.id()] = item_position;
@@ -63,7 +82,7 @@ void TaskListModelBase::ExistingTaskChanged(const Task& t) noexcept {
 
 void TaskListModelBase::AfterTaskAdded(const Task& t) noexcept {
   VERIFY(t.id());
-  Glib::RefPtr<Gtk::Widget> new_control = CreateRowFromTask(t);
+  Glib::RefPtr<Gtk::Widget> new_control = DoCreateRowFromTask(t);
   if (!new_control) {
     return;
   }
@@ -99,6 +118,16 @@ void TaskListModelBase::RemoveUpdatingIndices(guint position) noexcept {
     if (task_pos > position) {
       --task_pos;
     }
+  }
+}
+
+std::optional<int64_t> TaskListModelBase::FindTaskIdForRow(
+    Gtk::ListBoxRow* row) noexcept {
+  const gpointer data = row->get_data(task_id_quark_);
+  if (!data) {
+    return std::nullopt;
+  } else {
+    return *static_cast<const int64_t*>(data);
   }
 }
 

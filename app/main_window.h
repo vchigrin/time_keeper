@@ -12,6 +12,7 @@
 namespace m_time_tracker {
 
 class EditTaskDialog;
+class TaskListModelBase;
 
 class MainWindow : public Gtk::Window {
  public:
@@ -34,6 +35,8 @@ class MainWindow : public Gtk::Window {
   void RefreshTasksList() noexcept;
 
   void OnBtnStartStopClicked() noexcept;
+  void OnLstTasksRowSelected(Gtk::ListBoxRow* selected_row) noexcept;
+  void UpdateBtnStartStop(bool task_selected) noexcept;
 
   Gtk::Button* btn_menu_ = nullptr;
   Gtk::Button* btn_new_task_ = nullptr;
@@ -48,6 +51,7 @@ class MainWindow : public Gtk::Window {
   DbWrapper* const db_wrapper_;
   std::unique_ptr<EditTaskDialog> edit_task_dialog_;
   sigc::connection task_list_changed_connection_;
+  Glib::RefPtr<TaskListModelBase> task_list_model_;
   bool is_task_running_ = false;
 };
 
