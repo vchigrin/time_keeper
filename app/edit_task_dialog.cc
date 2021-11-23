@@ -32,6 +32,7 @@ void EditTaskDialog::on_show() {
     chk_archived_->set_active(task_->is_archived());
   }
   OnTaskNameChange();
+  edt_task_name_->grab_focus();
 }
 
 std::string EditTaskDialog::GetTrimmedEditText() noexcept {
