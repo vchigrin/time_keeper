@@ -33,8 +33,11 @@ class MainWindow : public Gtk::Window {
   void OnPageStackVisibleChildChanged() noexcept;
   void RefreshTasksList() noexcept;
 
+  void OnBtnStartStopClicked() noexcept;
+
   Gtk::Button* btn_menu_ = nullptr;
   Gtk::Button* btn_new_task_ = nullptr;
+  Gtk::Button* btn_start_stop_ = nullptr;
   Gtk::Stack* main_stack_ = nullptr;
   Gtk::Stack* page_stack_ = nullptr;
   Gtk::Label* lbl_running_time_ = nullptr;
@@ -45,6 +48,7 @@ class MainWindow : public Gtk::Window {
   DbWrapper* const db_wrapper_;
   std::unique_ptr<EditTaskDialog> edit_task_dialog_;
   sigc::connection task_list_changed_connection_;
+  bool is_task_running_ = false;
 };
 
 }  // namespace m_time_tracker

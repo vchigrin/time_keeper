@@ -133,6 +133,8 @@ MainWindow::MainWindow(
   lst_tasks_->bind_model(
       tasks_model,
       tasks_model->slot_create_widget());
+  btn_start_stop_->signal_clicked().connect(
+      sigc::mem_fun(*this, &MainWindow::OnBtnStartStopClicked));
 }
 
 MainWindow::~MainWindow() = default;
@@ -150,6 +152,7 @@ void MainWindow::InitializeWidgetPointers(
   lst_edit_tasks_ = GetWidgetChecked<Gtk::ListBox>(
       builder, "lst_edit_tasks");
   lst_tasks_ = GetWidgetChecked<Gtk::ListBox>(builder, "lst_tasks");
+  btn_start_stop_ = GetWidgetChecked<Gtk::Button>(builder, "btn_start_stop");
 }
 
 void MainWindow::OnBtnMenuClicked() noexcept {
@@ -207,6 +210,17 @@ void MainWindow::EditTask(Task* task) noexcept {
 
 void MainWindow::OnPageStackVisibleChildChanged() noexcept {
   main_stack_->set_visible_child(*page_stack_);
+}
+
+void MainWindow::OnBtnStartStopClicked() noexcept {
+  is_task_running_ = !is_task_running_;
+  Gtk::Image* child = dynamic_cast<Gtk::Image*>(btn_start_stop_->get_child());
+  VERIFY(child);
+  if (is_task_running_) {
+    child->property_icon_name() = "media-playback-stop-symbolic";
+  } else {
+    child->property_icon_name() = "media-playback-start-symbolic";
+  }
 }
 
 }  // namespace m_time_tracker
