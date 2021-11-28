@@ -24,6 +24,8 @@ db_entities = static_library('db_entities',
                       'task.cc',
                       'task.h',
                       'verify.h',
+                      'utils.cc',
+                      'utils.h',
                       include_directories : [project_include_dir],
                       dependencies : [
                         sqlite_dep,
@@ -56,6 +58,7 @@ executable('mobile_time_tracker',
 
 tests_executable = executable('tests_executable',
            'db_entities_test.cc',
+           'utils_test.cc',
            include_directories : [project_include_dir],
            link_with: db_entities,
            dependencies : [

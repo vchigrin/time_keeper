@@ -23,9 +23,10 @@ class Database;
 class Activity {
  public:
   using Id = int64_t;
+  using Duration = std::chrono::seconds;
   // In UTC.
   using TimePoint =
-      std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>;
+      std::chrono::time_point<std::chrono::system_clock, Duration>;
 
   static outcome::std_result<void> EnsureTableCreated(Database* db) noexcept;
 
@@ -70,6 +71,10 @@ class Activity {
     VERIFY(end > start);
     start_time_ = start;
     end_time_ = end;
+  }
+
+  static TimePoint GetCurrentTimePoint() noexcept {
+    return std::chrono::floor<Duration>(std::chrono::system_clock::now());
   }
 
  private:
