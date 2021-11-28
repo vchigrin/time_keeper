@@ -22,6 +22,7 @@ class Database;
 
 class Activity {
  public:
+  using Id = int64_t;
   // In UTC.
   using TimePoint =
       std::chrono::time_point<std::chrono::system_clock, std::chrono::seconds>;
@@ -49,11 +50,11 @@ class Activity {
     task_id_ = *t.id();
   }
 
-  std::optional<int64_t> id() const noexcept {
+  std::optional<Id> id() const noexcept {
     return id_;
   }
 
-  int64_t task_id() const noexcept {
+  Task::Id task_id() const noexcept {
     return task_id_;
   }
 
@@ -72,8 +73,8 @@ class Activity {
   }
 
  private:
-  Activity(int64_t id,
-           int64_t task_id,
+  Activity(Id id,
+           Task::Id task_id,
            const TimePoint& start_time,
            const std::optional<TimePoint>& end_time) noexcept
       : id_(id),
@@ -113,8 +114,8 @@ class Activity {
     }
   }
 
-  std::optional<int64_t> id_;
-  int64_t task_id_;
+  std::optional<Id> id_;
+  Task::Id task_id_;
   TimePoint start_time_;
   std::optional<TimePoint> end_time_;
 };

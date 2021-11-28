@@ -34,7 +34,7 @@ class EditTaskListModel : public TaskListModelBase {
   Glib::RefPtr<Gtk::Widget> CreateRowFromTask(const Task& t) noexcept override;
 
  private:
-  void EditTask(int64_t task_id) {
+  void EditTask(Task::Id task_id) {
     auto maybe_task = Task::LoadById(
         &db_wrapper_->db_for_read_only(), task_id);
     VERIFY(maybe_task);
@@ -227,7 +227,7 @@ void MainWindow::OnBtnStartStopClicked() noexcept {
 
 void MainWindow::OnLstTasksRowSelected(
     Gtk::ListBoxRow* selected_row) noexcept {
-  std::optional<int64_t> task_id = std::nullopt;
+  std::optional<Task::Id> task_id = std::nullopt;
   if (selected_row) {
     task_id = task_list_model_->FindTaskIdForRow(selected_row);
     VERIFY(task_id);

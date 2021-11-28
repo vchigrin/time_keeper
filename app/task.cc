@@ -18,7 +18,7 @@ constexpr std::string_view kBaseSelectQuery =
 
 // static
 outcome::std_result<void> Task::EnsureTableCreated(Database* db) noexcept {
-  const outcome::std_result<int64_t> res = db->Execute(
+  const outcome::std_result<Id> res = db->Execute(
       "CREATE TABLE IF NOT EXISTS Tasks( "
       "  id INTEGER PRIMARY KEY AUTOINCREMENT, "
       "  name TEXT UNIQUE NOT NULL, "
@@ -63,7 +63,7 @@ outcome::std_result<std::vector<Task>> Task::LoadNotArchived(
 }
 
 // static
-outcome::std_result<Task> Task::LoadById(Database* db, int64_t id) noexcept {
+outcome::std_result<Task> Task::LoadById(Database* db, Id id) noexcept {
   const std::string query = std::string(kBaseSelectQuery) +
       " WHERE id=" + std::to_string(id);
   auto maybe_tasks = LoadWithQuery(db, query);

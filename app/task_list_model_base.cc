@@ -35,12 +35,12 @@ Glib::RefPtr<Gtk::Widget> TaskListModelBase::DoCreateRowFromTask(
     return new_control;
   }
   auto delete_id = [](gpointer ptr) {
-    delete reinterpret_cast<int64_t*>(ptr);
+    delete reinterpret_cast<Task::Id*>(ptr);
   };
   // We have to copy data in pointer rather then store id as pointer,
   // since Task interface allows zero id, that we can not distinguish
   // from control without data.
-  new_control->set_data(task_id_quark_, new int64_t(*t.id()), delete_id);
+  new_control->set_data(task_id_quark_, new Task::Id(*t.id()), delete_id);
   return new_control;
 }
 
@@ -121,13 +121,13 @@ void TaskListModelBase::RemoveUpdatingIndices(guint position) noexcept {
   }
 }
 
-std::optional<int64_t> TaskListModelBase::FindTaskIdForRow(
+std::optional<Task::Id> TaskListModelBase::FindTaskIdForRow(
     Gtk::ListBoxRow* row) noexcept {
   const gpointer data = row->get_data(task_id_quark_);
   if (!data) {
     return std::nullopt;
   } else {
-    return *static_cast<const int64_t*>(data);
+    return *static_cast<const Task::Id*>(data);
   }
 }
 

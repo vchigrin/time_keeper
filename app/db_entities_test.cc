@@ -20,7 +20,7 @@ namespace outcome = m_time_tracker::outcome;
 template<typename Type>
 static void AddIdsToSet(
     const std::vector<Type>& objects,
-    std::unordered_set<int64_t>* object_ids) noexcept {
+    std::unordered_set<typename Type::Id>* object_ids) noexcept {
   for (const Type& t : objects) {
     VERIFY(t.id());
     VERIFY(object_ids->insert(*t.id()).second);
@@ -71,7 +71,7 @@ TEST_F(DbEntitiesTest, TaskSave) {
   }
 
   // Now task will be updated.
-  const int64_t task_id = *new_task.id();
+  const Task::Id task_id = *new_task.id();
   new_task.set_name("another name");
   new_task.set_archived(true);
   save_outcome = new_task.Save(db());
@@ -132,11 +132,11 @@ TEST_F(DbEntitiesTest, TaskLoad) {
     EXPECT_EQ(
         tasks.size(),
         children_of_foo.size() + children_of_bar.size() + 2u);
-    std::unordered_set<int64_t> expected_task_ids {*foo.id(), *bar.id() };
+    std::unordered_set<Task::Id> expected_task_ids {*foo.id(), *bar.id() };
     AddIdsToSet(children_of_foo, &expected_task_ids);
     AddIdsToSet(children_of_bar, &expected_task_ids);
 
-    std::unordered_set<int64_t> loaded_task_ids;
+    std::unordered_set<Task::Id> loaded_task_ids;
     AddIdsToSet(tasks, &loaded_task_ids);
     EXPECT_EQ(loaded_task_ids, expected_task_ids);
   }
@@ -148,9 +148,9 @@ TEST_F(DbEntitiesTest, TaskLoad) {
     ASSERT_TRUE(maybe_tasks);
     const std::vector<Task>& tasks = maybe_tasks.value();
     EXPECT_EQ(tasks.size(), 2u);
-    std::unordered_set<int64_t> expected_task_ids {*foo.id(), *bar.id() };
+    std::unordered_set<Task::Id> expected_task_ids {*foo.id(), *bar.id() };
 
-    std::unordered_set<int64_t> loaded_task_ids;
+    std::unordered_set<Task::Id> loaded_task_ids;
     AddIdsToSet(tasks, &loaded_task_ids);
     EXPECT_EQ(loaded_task_ids, expected_task_ids);
   }
@@ -162,10 +162,10 @@ TEST_F(DbEntitiesTest, TaskLoad) {
     ASSERT_TRUE(maybe_tasks);
     const std::vector<Task>& tasks = maybe_tasks.value();
     EXPECT_EQ(tasks.size(), children_of_foo.size());
-    std::unordered_set<int64_t> expected_task_ids;
+    std::unordered_set<Task::Id> expected_task_ids;
     AddIdsToSet(children_of_foo, &expected_task_ids);
 
-    std::unordered_set<int64_t> loaded_task_ids;
+    std::unordered_set<Task::Id> loaded_task_ids;
     AddIdsToSet(tasks, &loaded_task_ids);
     EXPECT_EQ(loaded_task_ids, expected_task_ids);
   }
@@ -183,9 +183,9 @@ TEST_F(DbEntitiesTest, TaskLoad) {
     ASSERT_TRUE(maybe_tasks);
     const std::vector<Task>& tasks = maybe_tasks.value();
     EXPECT_EQ(tasks.size(), 1u);
-    std::unordered_set<int64_t> expected_task_ids {*children_of_foo[0].id()};
+    std::unordered_set<Task::Id> expected_task_ids {*children_of_foo[0].id()};
 
-    std::unordered_set<int64_t> loaded_task_ids;
+    std::unordered_set<Task::Id> loaded_task_ids;
     AddIdsToSet(tasks, &loaded_task_ids);
     EXPECT_EQ(loaded_task_ids, expected_task_ids);
   }
@@ -217,7 +217,7 @@ TEST_F(DbEntitiesTest, ActivitySave) {
   }
 
   // Now activity will be updated.
-  const int64_t activity_id = *new_activity.id();
+  const Activity::Id activity_id = *new_activity.id();
   const Activity::TimePoint new_start = start_time + std::chrono::hours(1);
   const Activity::TimePoint new_end = start_time + std::chrono::hours(2);
   new_activity.SetInterval(new_start, new_end);
@@ -281,11 +281,11 @@ TEST_F(DbEntitiesTest, ActivityLoad) {
     EXPECT_EQ(
         activities.size(),
         children_of_foo.size() + children_of_bar.size());
-    std::unordered_set<int64_t> expected_ids;
+    std::unordered_set<Activity::Id> expected_ids;
     AddIdsToSet(children_of_foo, &expected_ids);
     AddIdsToSet(children_of_bar, &expected_ids);
 
-    std::unordered_set<int64_t> loaded_ids;
+    std::unordered_set<Activity::Id> loaded_ids;
     AddIdsToSet(activities, &loaded_ids);
     EXPECT_EQ(loaded_ids, expected_ids);
   }
@@ -297,13 +297,13 @@ TEST_F(DbEntitiesTest, ActivityLoad) {
     ASSERT_TRUE(maybe_activities);
     const std::vector<Activity>& activities = maybe_activities.value();
     EXPECT_EQ(activities.size(), 3u);
-    std::unordered_set<int64_t> expected_ids {
+    std::unordered_set<Activity::Id> expected_ids {
         *children_of_foo[1].id(),
         *children_of_foo[2].id(),
         *children_of_bar[1].id(),
     };
 
-    std::unordered_set<int64_t> loaded_ids;
+    std::unordered_set<Activity::Id> loaded_ids;
     AddIdsToSet(activities, &loaded_ids);
     EXPECT_EQ(loaded_ids, expected_ids);
   }
