@@ -5,7 +5,9 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 
+#include "app/activity.h"
 #include "app/ui_helpers.h"
 #include "app/db_wrapper.h"
 
@@ -35,12 +37,20 @@ class MainWindow : public Gtk::Window {
   void RefreshTasksList() noexcept;
 
   void OnBtnStartStopClicked() noexcept;
+  void OnBtnMakeRecordClicked() noexcept;
   void OnLstTasksRowSelected(Gtk::ListBoxRow* selected_row) noexcept;
-  void UpdateBtnStartStop(bool task_selected) noexcept;
+  void OnRunningTaskChanged(const std::optional<Task>&) noexcept;
+  void UpdateBtnStartStop() noexcept;
+  bool OnTaskTimer() noexcept;
+  void UpdateLblRunningTime() noexcept;
+  bool IsTaskRunning() const noexcept {
+    return db_wrapper_->running_task() != std::nullopt;
+  }
 
   Gtk::Button* btn_menu_ = nullptr;
   Gtk::Button* btn_new_task_ = nullptr;
   Gtk::Button* btn_start_stop_ = nullptr;
+  Gtk::Button* btn_make_record_ = nullptr;
   Gtk::Stack* main_stack_ = nullptr;
   Gtk::Stack* page_stack_ = nullptr;
   Gtk::Label* lbl_running_time_ = nullptr;
@@ -50,9 +60,10 @@ class MainWindow : public Gtk::Window {
   Glib::RefPtr<Gtk::Builder> resource_builder_;
   DbWrapper* const db_wrapper_;
   std::unique_ptr<EditTaskDialog> edit_task_dialog_;
-  sigc::connection task_list_changed_connection_;
+  sigc::connection running_task_changed_connection_;
   Glib::RefPtr<TaskListModelBase> task_list_model_;
-  bool is_task_running_ = false;
+  // Timer is active only when task is running.
+  sigc::connection timer_connection_;
 };
 
 }  // namespace m_time_tracker
