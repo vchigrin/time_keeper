@@ -2,11 +2,19 @@
 // Use of this source code is governed by a GPLv3 license that can be
 // found in the LICENSE file.
 
+#include <sys/stat.h>
+#include <sys/types.h>
+
+#include <iostream>
+
 #include "app/ui_helpers.h"
 #include "app/main_window.h"
 #include "app/db_wrapper.h"
 
 namespace {
+
+constexpr std::string_view kAppFolderName = ".mobile_time_tracker";
+constexpr std::string_view kDbFileName = "data.dat";
 
 void OnStartup() {
   hdy_init();
@@ -16,6 +24,23 @@ void OnStartup() {
       Gdk::Screen::get_default(),
       css_provider,
       GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+}
+
+std::filesystem::path GetDbPathOrExit() noexcept {
+  const char* home = std::getenv("HOME");
+  if (!home) {
+    std::cerr << "HOME environment variable is not set" << std::endl;
+    std::exit(1);
+  }
+  const auto app_folder = std::filesystem::path(home) / kAppFolderName;
+  const int result = ::mkdir(app_folder.native().c_str(), 0700);
+  const bool dir_ok = (result == 0 || (result == -1 && errno == EEXIST));
+  if (!dir_ok) {
+    std::cerr << "Failed create directory "
+              << app_folder.native() << std::endl;
+    std::exit(1);
+  }
+  return app_folder / kDbFileName;
 }
 
 }  // namespace
@@ -28,10 +53,15 @@ int main(int argc, char* argv[]) {
       "/org/mobile_time_tracker/app/main_window.ui");
   VERIFY(builder);
 
-  // TODO(vchigrin): Save DB in permanent location.
-  auto maybe_db_wrapper = m_time_tracker::DbWrapper::Open(":memory:");
-  // TODO(vchigrin): Proper error handling
-  VERIFY(maybe_db_wrapper);
+  const std::filesystem::path db_path = GetDbPathOrExit();
+
+  auto maybe_db_wrapper = m_time_tracker::DbWrapper::Open(db_path.native());
+  if (!maybe_db_wrapper) {
+    std::cerr << "Failed open database file " << db_path
+              << " Error " << maybe_db_wrapper.error().message()
+              << std::endl;
+    return 1;
+  }
 
   m_time_tracker::DbWrapper db_wrapper(std::move(maybe_db_wrapper.value()));
 
