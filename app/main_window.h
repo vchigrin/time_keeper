@@ -9,7 +9,7 @@
 
 #include "app/activity.h"
 #include "app/ui_helpers.h"
-#include "app/db_wrapper.h"
+#include "app/app_state.h"
 
 namespace m_time_tracker {
 
@@ -18,11 +18,11 @@ class TaskListModelBase;
 
 class MainWindow : public Gtk::Window {
  public:
-  // DbWrapper must outlive this object.
+  // AppState must outlive this object.
   MainWindow(
       GtkWindow* wnd,
       const Glib::RefPtr<Gtk::Builder>& builder,
-      DbWrapper* db_wrapper);
+      AppState* app_state);
   ~MainWindow();
 
   void EditTask(Task* task) noexcept;
@@ -44,7 +44,7 @@ class MainWindow : public Gtk::Window {
   bool OnTaskTimer() noexcept;
   void UpdateLblRunningTime() noexcept;
   bool IsTaskRunning() const noexcept {
-    return db_wrapper_->running_task() != std::nullopt;
+    return app_state_->running_task() != std::nullopt;
   }
 
   Gtk::Button* btn_menu_ = nullptr;
@@ -58,7 +58,7 @@ class MainWindow : public Gtk::Window {
   Gtk::ListBox* lst_tasks_ = nullptr;
   Gtk::StackSidebar* page_stack_sidebar_ = nullptr;
   Glib::RefPtr<Gtk::Builder> resource_builder_;
-  DbWrapper* const db_wrapper_;
+  AppState* const app_state_;
   std::unique_ptr<EditTaskDialog> edit_task_dialog_;
   sigc::connection running_task_changed_connection_;
   Glib::RefPtr<TaskListModelBase> task_list_model_;

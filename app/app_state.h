@@ -13,9 +13,9 @@
 
 namespace m_time_tracker {
 
-class DbWrapper {
+class AppState {
  public:
-  static outcome::std_result<DbWrapper> Open(
+  static outcome::std_result<AppState> Open(
       const std::filesystem::path& db_path) noexcept;
 
   outcome::std_result<void> SaveTask(Task* task) noexcept;
@@ -45,7 +45,7 @@ class DbWrapper {
     return db_;
   }
 
-  DbWrapper(DbWrapper&&) = default;
+  AppState(AppState&&) = default;
 
   // Returns nullopt if there is no running Task.
   std::optional<Task> running_task() const noexcept {
@@ -71,7 +71,7 @@ class DbWrapper {
 
  private:
   // Expects DB with all tables alaready created.
-  explicit DbWrapper(Database initalized_db) noexcept
+  explicit AppState(Database initalized_db) noexcept
       : db_(std::move(initalized_db)) {}
 
   SignalWithTask sig_existing_task_changed_;

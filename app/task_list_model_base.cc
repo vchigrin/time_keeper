@@ -6,19 +6,19 @@
 
 #include <utility>
 
-#include "app/db_wrapper.h"
+#include "app/app_state.h"
 
 namespace m_time_tracker {
 
 // static
 const Glib::Quark TaskListModelBase::task_id_quark_("task-list-task-id");
 
-TaskListModelBase::TaskListModelBase(DbWrapper* db_wrapper) noexcept {
-  all_connections_.emplace_back(db_wrapper->ConnectExistingTaskChanged(
+TaskListModelBase::TaskListModelBase(AppState* app_state) noexcept {
+  all_connections_.emplace_back(app_state->ConnectExistingTaskChanged(
       sigc::mem_fun(*this, &TaskListModelBase::ExistingTaskChanged)));
-  all_connections_.emplace_back(db_wrapper->ConnectAfterTaskAdded(
+  all_connections_.emplace_back(app_state->ConnectAfterTaskAdded(
       sigc::mem_fun(*this, &TaskListModelBase::AfterTaskAdded)));
-  all_connections_.emplace_back(db_wrapper->ConnectBeforeTaskDeleted(
+  all_connections_.emplace_back(app_state->ConnectBeforeTaskDeleted(
       sigc::mem_fun(*this, &TaskListModelBase::BeforeTaskDeleted)));
 }
 

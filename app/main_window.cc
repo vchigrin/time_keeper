@@ -24,15 +24,15 @@ namespace {
 class EditTaskListModel : public TaskListModelBase {
  protected:
   friend class TaskListModelBase;
-  EditTaskListModel(DbWrapper* db_wrapper, MainWindow* main_window) noexcept
-      : TaskListModelBase(db_wrapper),
-        db_wrapper_(db_wrapper),
+  EditTaskListModel(AppState* app_state, MainWindow* main_window) noexcept
+      : TaskListModelBase(app_state),
+        app_state_(app_state),
         main_window_(main_window) {
-    auto maybe_all_tasks = Task::LoadAll(&db_wrapper->db_for_read_only());
+    auto maybe_all_tasks = Task::LoadAll(&app_state->db_for_read_only());
     VERIFY(maybe_all_tasks);
     Initialize(maybe_all_tasks.value());
     VERIFY(main_window_);
-    running_task_changed_connection_ = db_wrapper_->ConnectRunningTaskChanged(
+    running_task_changed_connection_ = app_state_->ConnectRunningTaskChanged(
         sigc::mem_fun(*this, &EditTaskListModel::OnRunningTaskChanged));
   }
 
@@ -45,7 +45,7 @@ class EditTaskListModel : public TaskListModelBase {
  private:
   void EditTask(Task::Id task_id) {
     auto maybe_task = Task::LoadById(
-        &db_wrapper_->db_for_read_only(), task_id);
+        &app_state_->db_for_read_only(), task_id);
     VERIFY(maybe_task);
     main_window_->EditTask(&maybe_task.value());
   }
@@ -53,7 +53,7 @@ class EditTaskListModel : public TaskListModelBase {
   void OnRunningTaskChanged(
       const std::optional<Task>& new_running_task) noexcept;
 
-  DbWrapper* const db_wrapper_;
+  AppState* const app_state_;
   MainWindow* const main_window_;
   sigc::connection running_task_changed_connection_;
   std::unordered_map<Task::Id, Glib::RefPtr<Gtk::Button>>
@@ -63,10 +63,10 @@ class EditTaskListModel : public TaskListModelBase {
 class TaskListModel : public TaskListModelBase {
  protected:
   friend class TaskListModelBase;
-  explicit TaskListModel(DbWrapper* db_wrapper) noexcept
-      : TaskListModelBase(db_wrapper) {
+  explicit TaskListModel(AppState* app_state) noexcept
+      : TaskListModelBase(app_state) {
     auto maybe_tasks = Task::LoadNotArchived(
-        &db_wrapper->db_for_read_only());
+        &app_state->db_for_read_only());
     VERIFY(maybe_tasks);
     Initialize(maybe_tasks.value());
   }
@@ -100,7 +100,7 @@ Glib::RefPtr<Gtk::Widget> EditTaskListModel::CreateRowFromTask(
   }
   task_id_to_btn_edit_[*t.id()] = btn_edit;
 
-  const auto maybe_running_task = db_wrapper_->running_task();
+  const auto maybe_running_task = app_state_->running_task();
   if (maybe_running_task &&
       maybe_running_task->id() == t.id()) {
     btn_edit->set_sensitive(false);
@@ -144,11 +144,11 @@ Glib::RefPtr<Gtk::Widget> TaskListModel::CreateRowFromTask(
 MainWindow::MainWindow(
     GtkWindow* wnd,
     const Glib::RefPtr<Gtk::Builder>& builder,
-    DbWrapper* db_wrapper)
+    AppState* app_state)
     : Gtk::Window(wnd),
       resource_builder_(builder),
-      db_wrapper_(db_wrapper) {
-  VERIFY(db_wrapper_);
+      app_state_(app_state) {
+  VERIFY(app_state_);
   InitializeWidgetPointers(builder);
   page_stack_->property_visible_child().signal_changed().connect(
       sigc::mem_fun(*this, &MainWindow::OnPageStackVisibleChildChanged));
@@ -158,11 +158,11 @@ MainWindow::MainWindow(
   btn_new_task_->signal_clicked().connect(
       sigc::mem_fun(*this, &MainWindow::OnBtnNewTaskClicked));
   Glib::RefPtr<EditTaskListModel> edit_tasks_model =
-      TaskListModelBase::create<EditTaskListModel>(db_wrapper_, this);
+      TaskListModelBase::create<EditTaskListModel>(app_state_, this);
   lst_edit_tasks_->bind_model(
       edit_tasks_model,
       edit_tasks_model->slot_create_widget());
-  task_list_model_ = TaskListModelBase::create<TaskListModel>(db_wrapper_);
+  task_list_model_ = TaskListModelBase::create<TaskListModel>(app_state_);
   lst_tasks_->bind_model(
       task_list_model_,
       task_list_model_->slot_create_widget());
@@ -172,7 +172,7 @@ MainWindow::MainWindow(
       sigc::mem_fun(*this, &MainWindow::OnBtnStartStopClicked));
   btn_make_record_->signal_clicked().connect(
       sigc::mem_fun(*this, &MainWindow::OnBtnMakeRecordClicked));
-  running_task_changed_connection_ = db_wrapper_->ConnectRunningTaskChanged(
+  running_task_changed_connection_ = app_state_->ConnectRunningTaskChanged(
       sigc::mem_fun(*this, &MainWindow::OnRunningTaskChanged));
   OnRunningTaskChanged(std::nullopt);
 }
@@ -226,7 +226,7 @@ void MainWindow::EditTask(Task* task) noexcept {
     }
     // Check for already present task with that name.
     outcome::std_result<Task> maybe_conflicting_task = Task::LoadByName(
-        &db_wrapper_->db_for_read_only(),
+        &app_state_->db_for_read_only(),
         task->name());
     if (maybe_conflicting_task &&
         maybe_conflicting_task.value().id() != task->id()) {
@@ -242,7 +242,7 @@ void MainWindow::EditTask(Task* task) noexcept {
       continue;
     }
 
-    const auto save_result = db_wrapper_->SaveTask(task);
+    const auto save_result = app_state_->SaveTask(task);
     // TODO(vchigrin): Better error handling.
     VERIFY(save_result);
     break;
@@ -269,11 +269,11 @@ void MainWindow::OnBtnStartStopClicked() noexcept {
         /* modal */ true);
     const int result = message_dlg.run();
     if (result == Gtk::RESPONSE_YES) {
-      const auto save_result = db_wrapper_->RecordRunningTaskActivity();
+      const auto save_result = app_state_->RecordRunningTaskActivity();
       // TODO(vchigrin): Better error handling.
       VERIFY(save_result);
     }
-    db_wrapper_->DropRunningTask();
+    app_state_->DropRunningTask();
   } else {
     timer_connection_ = Glib::signal_timeout().connect_seconds(
         sigc::mem_fun(*this, &MainWindow::OnTaskTimer), 1);
@@ -282,15 +282,15 @@ void MainWindow::OnBtnStartStopClicked() noexcept {
     const auto task_id = task_list_model_->FindTaskIdForRow(selected_row);
     VERIFY(task_id);
     auto maybe_task = Task::LoadById(
-        &db_wrapper_->db_for_read_only(), *task_id);
+        &app_state_->db_for_read_only(), *task_id);
     VERIFY(maybe_task);
-    db_wrapper_->StartRunningTask(maybe_task.value());
+    app_state_->StartRunningTask(maybe_task.value());
   }
 }
 
 void MainWindow::OnBtnMakeRecordClicked() noexcept {
   VERIFY(IsTaskRunning());
-  const auto save_result = db_wrapper_->RecordRunningTaskActivity();
+  const auto save_result = app_state_->RecordRunningTaskActivity();
   // TODO(vchigrin): Better error handling.
   VERIFY(save_result);
 }
@@ -303,7 +303,7 @@ void MainWindow::OnLstTasksRowSelected(
         task_list_model_->FindTaskIdForRow(selected_row);
     VERIFY(task_id);
     auto maybe_task = Task::LoadById(
-        &db_wrapper_->db_for_read_only(), *task_id);
+        &app_state_->db_for_read_only(), *task_id);
     VERIFY(maybe_task);
     task = std::move(maybe_task.value());
   } else {
@@ -312,7 +312,7 @@ void MainWindow::OnLstTasksRowSelected(
   }
   if (IsTaskRunning()) {
     VERIFY(task);
-    db_wrapper_->ChangeRunningTask(std::move(*task));
+    app_state_->ChangeRunningTask(std::move(*task));
   }
   UpdateBtnStartStop();
 }
@@ -349,12 +349,12 @@ void MainWindow::OnRunningTaskChanged(
 }
 
 void MainWindow::UpdateLblRunningTime() noexcept {
-  std::optional<Task> running_task = db_wrapper_->running_task();
+  std::optional<Task> running_task = app_state_->running_task();
   if (!running_task) {
     // TODO(vchigrin): Localization.
     lbl_running_time_->set_text("<No task running>");
   } else {
-    auto maybe_runtime = db_wrapper_->RunningTaskRunTime();
+    auto maybe_runtime = app_state_->RunningTaskRunTime();
     VERIFY(maybe_runtime);
     const Activity::Duration runtime = *maybe_runtime;
     // TODO(vchigrin): Localization.

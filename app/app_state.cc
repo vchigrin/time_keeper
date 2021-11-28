@@ -2,12 +2,12 @@
 // Use of this source code is governed by a GPLv3 license that can be
 // found in the LICENSE file.
 
-#include "app/db_wrapper.h"
+#include "app/app_state.h"
 
 namespace m_time_tracker {
 
 // static
-outcome::std_result<DbWrapper> DbWrapper::Open(
+outcome::std_result<AppState> AppState::Open(
     const std::filesystem::path& db_path) noexcept {
   outcome::std_result<Database> maybe_db = Database::Open(db_path);
   if (!maybe_db) {
@@ -22,10 +22,10 @@ outcome::std_result<DbWrapper> DbWrapper::Open(
   if (!activity_init_result) {
     return activity_init_result.error();
   }
-  return DbWrapper(std::move(maybe_db.value()));
+  return AppState(std::move(maybe_db.value()));
 }
 
-outcome::std_result<void> DbWrapper::SaveTask(Task* task) noexcept {
+outcome::std_result<void> AppState::SaveTask(Task* task) noexcept {
   VERIFY(task);
   const bool was_saved = (task->id() != std::nullopt);
   outcome::std_result<void> save_result = task->Save(&db_);
@@ -43,20 +43,20 @@ outcome::std_result<void> DbWrapper::SaveTask(Task* task) noexcept {
   return save_result;
 }
 
-void DbWrapper::StartRunningTask(Task new_task) noexcept {
+void AppState::StartRunningTask(Task new_task) noexcept {
   VERIFY(new_task.id());
   running_task_ = std::move(new_task);
   running_task_start_time_ = Activity::GetCurrentTimePoint();
   sig_running_task_changed_(running_task_);
 }
 
-void DbWrapper::DropRunningTask() noexcept {
+void AppState::DropRunningTask() noexcept {
   running_task_ = std::nullopt;
   running_task_start_time_ = std::nullopt;
   sig_running_task_changed_(running_task_);
 }
 
-outcome::std_result<void> DbWrapper::RecordRunningTaskActivity() noexcept {
+outcome::std_result<void> AppState::RecordRunningTaskActivity() noexcept {
   VERIFY(running_task_);
   VERIFY(running_task_start_time_);
   Activity new_activity(*running_task_, *running_task_start_time_);
@@ -70,7 +70,7 @@ outcome::std_result<void> DbWrapper::RecordRunningTaskActivity() noexcept {
   return outcome;
 }
 
-void DbWrapper::ChangeRunningTask(Task new_task) noexcept {
+void AppState::ChangeRunningTask(Task new_task) noexcept {
   if (!running_task_) {
     StartRunningTask(std::move(new_task));
   } else {
@@ -81,7 +81,7 @@ void DbWrapper::ChangeRunningTask(Task new_task) noexcept {
 }
 
 std::optional<Activity::Duration>
-    DbWrapper::RunningTaskRunTime() const noexcept {
+    AppState::RunningTaskRunTime() const noexcept {
   if (!running_task_start_time_) {
     return std::nullopt;
   } else {

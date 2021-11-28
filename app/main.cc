@@ -9,7 +9,7 @@
 
 #include "app/ui_helpers.h"
 #include "app/main_window.h"
-#include "app/db_wrapper.h"
+#include "app/app_state.h"
 
 namespace {
 
@@ -55,20 +55,20 @@ int main(int argc, char* argv[]) {
 
   const std::filesystem::path db_path = GetDbPathOrExit();
 
-  auto maybe_db_wrapper = m_time_tracker::DbWrapper::Open(db_path.native());
-  if (!maybe_db_wrapper) {
+  auto maybe_app_state = m_time_tracker::AppState::Open(db_path.native());
+  if (!maybe_app_state) {
     std::cerr << "Failed open database file " << db_path
-              << " Error " << maybe_db_wrapper.error().message()
+              << " Error " << maybe_app_state.error().message()
               << std::endl;
     return 1;
   }
 
-  m_time_tracker::DbWrapper db_wrapper(std::move(maybe_db_wrapper.value()));
+  m_time_tracker::AppState app_state(std::move(maybe_app_state.value()));
 
   std::unique_ptr<m_time_tracker::MainWindow> wnd =
       m_time_tracker::GetWindowDerived<m_time_tracker::MainWindow>(
           builder, "main_window",
-          &db_wrapper);
+          &app_state);
 
   return app->run(*wnd, argc, argv);
 }

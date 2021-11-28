@@ -14,7 +14,7 @@
 
 namespace m_time_tracker {
 
-class DbWrapper;
+class AppState;
 
 class TaskListModelBase: public Gio::ListStore<Gtk::Widget> {
  public:
@@ -38,7 +38,7 @@ class TaskListModelBase: public Gio::ListStore<Gtk::Widget> {
   std::optional<Task::Id> FindTaskIdForRow(Gtk::ListBoxRow*) noexcept;
 
  protected:
-  explicit TaskListModelBase(DbWrapper* db_wrapper) noexcept;
+  explicit TaskListModelBase(AppState* app_state) noexcept;
 
   // May return nullptr if this Task must not be displayed in current
   // list view.
