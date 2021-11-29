@@ -67,6 +67,7 @@ outcome::std_result<void> AppState::RecordRunningTaskActivity() noexcept {
     return outcome;
   }
   running_task_start_time_ = now;
+  sig_after_activity_added_(new_activity);
   return outcome;
 }
 

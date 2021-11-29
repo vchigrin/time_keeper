@@ -13,8 +13,9 @@
 
 #include "app/activity.h"
 #include "app/edit_task_dialog.h"
-#include "app/task_list_model_base.h"
+#include "app/recent_activities_model.h"
 #include "app/task.h"
+#include "app/task_list_model_base.h"
 #include "app/utils.h"
 
 namespace m_time_tracker {
@@ -23,7 +24,7 @@ namespace {
 
 class EditTaskListModel : public TaskListModelBase {
  protected:
-  friend class TaskListModelBase;
+  friend class ListModelBase<Task>;
   EditTaskListModel(AppState* app_state, MainWindow* main_window) noexcept
       : TaskListModelBase(app_state),
         app_state_(app_state),
@@ -40,7 +41,8 @@ class EditTaskListModel : public TaskListModelBase {
     running_task_changed_connection_.disconnect();
   }
 
-  Glib::RefPtr<Gtk::Widget> CreateRowFromTask(const Task& t) noexcept override;
+  Glib::RefPtr<Gtk::Widget> CreateRowFromObject(
+      const Task& t) noexcept override;
 
  private:
   void EditTask(Task::Id task_id) {
@@ -62,7 +64,7 @@ class EditTaskListModel : public TaskListModelBase {
 
 class TaskListModel : public TaskListModelBase {
  protected:
-  friend class TaskListModelBase;
+  friend class ListModelBase<Task>;
   explicit TaskListModel(AppState* app_state) noexcept
       : TaskListModelBase(app_state) {
     auto maybe_tasks = Task::LoadNotArchived(
@@ -71,10 +73,11 @@ class TaskListModel : public TaskListModelBase {
     Initialize(maybe_tasks.value());
   }
 
-  Glib::RefPtr<Gtk::Widget> CreateRowFromTask(const Task& t) noexcept override;
+  Glib::RefPtr<Gtk::Widget> CreateRowFromObject(
+      const Task& t) noexcept override;
 };
 
-Glib::RefPtr<Gtk::Widget> EditTaskListModel::CreateRowFromTask(
+Glib::RefPtr<Gtk::Widget> EditTaskListModel::CreateRowFromObject(
     const Task& t) noexcept {
   GtkListBoxRow* row = reinterpret_cast<GtkListBoxRow*>(hdy_action_row_new());
   g_object_ref_sink(row);
@@ -121,7 +124,7 @@ void EditTaskListModel::OnRunningTaskChanged(
   }
 }
 
-Glib::RefPtr<Gtk::Widget> TaskListModel::CreateRowFromTask(
+Glib::RefPtr<Gtk::Widget> TaskListModel::CreateRowFromObject(
     const Task& t) noexcept {
   if (t.is_archived()) {
     // May be if task was changed.
@@ -168,6 +171,11 @@ MainWindow::MainWindow(
       task_list_model_->slot_create_widget());
   lst_tasks_->signal_row_selected().connect(
       sigc::mem_fun(*this, &MainWindow::OnLstTasksRowSelected));
+  Glib::RefPtr<RecentActivitiesModel> activities_model =
+      RecentActivitiesModel::create<RecentActivitiesModel>(app_state_);
+  lst_recent_activities_->bind_model(
+      activities_model,
+      activities_model->slot_create_widget());
   btn_start_stop_->signal_clicked().connect(
       sigc::mem_fun(*this, &MainWindow::OnBtnStartStopClicked));
   btn_make_record_->signal_clicked().connect(
@@ -195,6 +203,8 @@ void MainWindow::InitializeWidgetPointers(
   lst_edit_tasks_ = GetWidgetChecked<Gtk::ListBox>(
       builder, "lst_edit_tasks");
   lst_tasks_ = GetWidgetChecked<Gtk::ListBox>(builder, "lst_tasks");
+  lst_recent_activities_ = GetWidgetChecked<Gtk::ListBox>(
+      builder, "lst_recent_activities");
   btn_start_stop_ = GetWidgetChecked<Gtk::Button>(builder, "btn_start_stop");
   btn_make_record_ = GetWidgetChecked<Gtk::Button>(builder, "btn_make_record");
 }
@@ -279,7 +289,7 @@ void MainWindow::OnBtnStartStopClicked() noexcept {
         sigc::mem_fun(*this, &MainWindow::OnTaskTimer), 1);
     Gtk::ListBoxRow* selected_row = lst_tasks_->get_selected_row();
     VERIFY(selected_row);  // Button should be disabled if selection is abent.
-    const auto task_id = task_list_model_->FindTaskIdForRow(selected_row);
+    const auto task_id = task_list_model_->GetObjectIdForRow(selected_row);
     VERIFY(task_id);
     auto maybe_task = Task::LoadById(
         &app_state_->db_for_read_only(), *task_id);
@@ -300,7 +310,7 @@ void MainWindow::OnLstTasksRowSelected(
   std::optional<Task> task = std::nullopt;
   if (selected_row) {
     const std::optional<Task::Id> task_id =
-        task_list_model_->FindTaskIdForRow(selected_row);
+        task_list_model_->GetObjectIdForRow(selected_row);
     VERIFY(task_id);
     auto maybe_task = Task::LoadById(
         &app_state_->db_for_read_only(), *task_id);

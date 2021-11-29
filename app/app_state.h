@@ -24,6 +24,8 @@ class AppState {
   using SlotWithTask = SignalWithTask::slot_type;
   using SignalWithOptTask = sigc::signal<void(const std::optional<Task>&)>;
   using SlotWithOptTask = SignalWithOptTask::slot_type;
+  using SignalWithActivity = sigc::signal<void(const Activity&)>;
+  using SlotWithActivity = SignalWithActivity::slot_type;
 
   sigc::connection ConnectExistingTaskChanged(SlotWithTask&& h) noexcept {
     return sig_existing_task_changed_.connect(std::forward<SlotWithTask>(h));
@@ -40,6 +42,23 @@ class AppState {
   sigc::connection ConnectRunningTaskChanged(SlotWithOptTask&& h) noexcept {
     return sig_running_task_changed_.connect(std::forward<SlotWithOptTask>(h));
   }
+
+  sigc::connection ConnectExistingActivityChanged(
+      SlotWithActivity&& h) noexcept {
+    return sig_existing_activity_changed_.connect(
+        std::forward<SlotWithActivity>(h));
+  }
+
+  sigc::connection ConnectBeforeActivityDeleted(SlotWithActivity&& h) noexcept {
+    return sig_before_activity_deleted_.connect(
+        std::forward<SlotWithActivity>(h));
+  }
+
+  sigc::connection ConnectAfterActivityAdded(SlotWithActivity&& h) noexcept {
+    return sig_after_activity_added_.connect(
+        std::forward<SlotWithActivity>(h));
+  }
+
 
   Database& db_for_read_only() noexcept {
     return db_;
@@ -78,6 +97,9 @@ class AppState {
   SignalWithTask sig_before_task_deleted_;
   SignalWithTask sig_after_task_added_;
   SignalWithOptTask sig_running_task_changed_;
+  SignalWithActivity sig_existing_activity_changed_;
+  SignalWithActivity sig_before_activity_deleted_;
+  SignalWithActivity sig_after_activity_added_;
   Database db_;
 
   // Must alwasy be saved task.

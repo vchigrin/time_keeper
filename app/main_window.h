@@ -56,6 +56,7 @@ class MainWindow : public Gtk::Window {
   Gtk::Label* lbl_running_time_ = nullptr;
   Gtk::ListBox* lst_edit_tasks_ = nullptr;
   Gtk::ListBox* lst_tasks_ = nullptr;
+  Gtk::ListBox* lst_recent_activities_ = nullptr;
   Gtk::StackSidebar* page_stack_sidebar_ = nullptr;
   Glib::RefPtr<Gtk::Builder> resource_builder_;
   AppState* const app_state_;
