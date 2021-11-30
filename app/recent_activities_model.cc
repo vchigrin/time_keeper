@@ -6,9 +6,23 @@
 
 #include <string>
 
+#include <boost/format.hpp>
+
 #include "app/app_state.h"
+#include "app/utils.h"
 
 namespace m_time_tracker {
+
+namespace {
+
+std::string CreateSubtitle(const Activity& a) {
+  VERIFY(a.end_time());
+  return (boost::format("%1% - %2%") %
+      FormatTimePoint(a.start_time()) %
+      FormatTimePoint(*a.end_time())).str();
+}
+
+}  // namespace
 
 RecentActivitiesModel::RecentActivitiesModel(AppState* app_state) noexcept
     : ListModelBase(app_state),
@@ -47,6 +61,18 @@ Glib::RefPtr<Gtk::Widget> RecentActivitiesModel::CreateRowFromObject(
   hdy_preferences_row_set_title(
       reinterpret_cast<HdyPreferencesRow*>(wrapped_row->gobj()),
       title.c_str());
+  const std::string subtitle = CreateSubtitle(a);
+  hdy_action_row_set_subtitle(
+      reinterpret_cast<HdyActionRow*>(row),
+      subtitle.c_str());
+
+  const auto duration = *a.end_time() - a.start_time();
+  const std::string runtime = FormatRuntime(
+      duration, FormatMode::kLongWithoutSeconds);
+  Gtk::Label* label = manage(new Gtk::Label(runtime));
+  wrapped_row->add(*label);
+  label->show();
+
   Glib::RefPtr<Gtk::Button> btn_edit(new Gtk::Button());
   btn_edit->set_image_from_icon_name("gtk-edit");
   btn_edit->show();

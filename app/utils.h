@@ -9,6 +9,13 @@
 
 namespace m_time_tracker {
 
-std::string FormatRuntime(Activity::Duration runtime) noexcept;
+enum class FormatMode {
+  kShortWithSeconds,
+  kLongWithoutSeconds,
+};
+
+std::string FormatRuntime(
+    Activity::Duration runtime, FormatMode mode) noexcept;
+std::string FormatTimePoint(Activity::TimePoint time_point) noexcept;
 
 }  // namespace m_time_tracker

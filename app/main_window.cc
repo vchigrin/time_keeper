@@ -368,8 +368,9 @@ void MainWindow::UpdateLblRunningTime() noexcept {
     VERIFY(maybe_runtime);
     const Activity::Duration runtime = *maybe_runtime;
     // TODO(vchigrin): Localization.
-    lbl_running_time_->set_text((boost::format("Running: %1% for %2%")
-        % running_task->name() % FormatRuntime(runtime)).str());
+    lbl_running_time_->set_text((boost::format("Running: %1% for %2%") %
+        running_task->name() %
+        FormatRuntime(runtime, FormatMode::kShortWithSeconds)).str());
   }
 }
 

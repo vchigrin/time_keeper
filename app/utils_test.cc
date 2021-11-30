@@ -7,14 +7,17 @@
 #include "app/utils.h"
 
 using m_time_tracker::FormatRuntime;
+using m_time_tracker::FormatMode;
 
 TEST(UtilsTest, TaskSave) {
-  EXPECT_EQ("00:00", FormatRuntime(std::chrono::seconds(0)));
-  EXPECT_EQ("00:01", FormatRuntime(std::chrono::seconds(1)));
-  EXPECT_EQ("01:00", FormatRuntime(std::chrono::seconds(60)));
-  EXPECT_EQ("01:01", FormatRuntime(std::chrono::seconds(61)));
-  EXPECT_EQ("1.00:00", FormatRuntime(std::chrono::seconds(3600)));
-  EXPECT_EQ("1.00:01", FormatRuntime(std::chrono::seconds(3601)));
-  EXPECT_EQ("1.01:01", FormatRuntime(std::chrono::seconds(3661)));
-  EXPECT_EQ("1.10:01", FormatRuntime(std::chrono::seconds(4201)));
+  const auto mode_short = FormatMode::kShortWithSeconds;
+
+  EXPECT_EQ("00:00", FormatRuntime(std::chrono::seconds(0), mode_short));
+  EXPECT_EQ("00:01", FormatRuntime(std::chrono::seconds(1), mode_short));
+  EXPECT_EQ("01:00", FormatRuntime(std::chrono::seconds(60), mode_short));
+  EXPECT_EQ("01:01", FormatRuntime(std::chrono::seconds(61), mode_short));
+  EXPECT_EQ("1.00:00", FormatRuntime(std::chrono::seconds(3600), mode_short));
+  EXPECT_EQ("1.00:01", FormatRuntime(std::chrono::seconds(3601), mode_short));
+  EXPECT_EQ("1.01:01", FormatRuntime(std::chrono::seconds(3661), mode_short));
+  EXPECT_EQ("1.10:01", FormatRuntime(std::chrono::seconds(4201), mode_short));
 }

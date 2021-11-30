@@ -4,16 +4,33 @@
 
 #include "app/utils.h"
 
+#include <chrono>
+#include <ctime>
+#include <iomanip>
+#include <sstream>
+
 #include <boost/format.hpp>
+
+#include "app/verify.h"
 
 namespace m_time_tracker {
 
-std::string FormatRuntime(Activity::Duration runtime) noexcept {
+std::string FormatRuntime(
+    Activity::Duration runtime, FormatMode mode) noexcept {
   std::string result;
   if (runtime >= std::chrono::hours(1)) {
     const auto hours = std::chrono::floor<std::chrono::hours>(runtime);
     result += std::to_string(hours.count());
-    result += ".";
+    switch (mode) {
+      case FormatMode::kShortWithSeconds:
+        result += ".";
+        break;
+      case FormatMode::kLongWithoutSeconds:
+        // TODO(vchigrin): Localization.
+        result += " hours ";
+        break;
+    }
+
     runtime -= hours;
   }
 
@@ -21,8 +38,26 @@ std::string FormatRuntime(Activity::Duration runtime) noexcept {
   const auto seconds =
       std::chrono::floor<std::chrono::seconds>(runtime) %
           std::chrono::minutes(1);
-  return result + (boost::format("%1$02d:%2$02d") %
-      minutes.count() % seconds.count()).str();
+
+  switch (mode) {
+    case FormatMode::kShortWithSeconds:
+      return result + (boost::format("%1$02d:%2$02d") %
+          minutes.count() % seconds.count()).str();
+    case FormatMode::kLongWithoutSeconds:
+      // TODO(vchigrin): Localization.
+      return result + (boost::format("%1% min") % minutes.count()).str();
+    default:
+      NOTREACHED();
+  }
+}
+
+std::string FormatTimePoint(Activity::TimePoint time_point) noexcept {
+  const std::time_t tp = std::chrono::system_clock::to_time_t(time_point);
+  const std::tm* local_time = std::localtime(&tp);
+  VERIFY(local_time);
+  std::stringstream sstrm;
+  sstrm << std::put_time(local_time, "%b %d %H:%M");
+  return sstrm.str();
 }
 
 }  // namespace m_time_tracker
