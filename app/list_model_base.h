@@ -118,7 +118,8 @@ void ListModelBase<ObjectType>::Initialize(
     auto control = DoCreateRowFromObject(t);
     VERIFY(control);
     items.push_back(std::move(control));
-    VERIFY(object_id_to_item_index_.insert({*t.id(), items.size()}).second);
+    VERIFY(object_id_to_item_index_.insert(
+        {*t.id(), items.size() - 1}).second);
   }
   splice(0U, 0U, items);
 }
@@ -148,7 +149,8 @@ void ListModelBase<ObjectType>::ExistingObjectChanged(
 }
 
 template<typename ObjectType>
-void ListModelBase<ObjectType>::AfterObjectAdded(const ObjectType& t) noexcept {
+void ListModelBase<ObjectType>::AfterObjectAdded(
+    const ObjectType& t) noexcept {
   VERIFY(t.id());
   Glib::RefPtr<Gtk::Widget> new_control = DoCreateRowFromObject(t);
   if (!new_control) {
