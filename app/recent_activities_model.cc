@@ -24,10 +24,13 @@ std::string CreateSubtitle(const Activity& a) {
 
 }  // namespace
 
-RecentActivitiesModel::RecentActivitiesModel(AppState* app_state) noexcept
+RecentActivitiesModel::RecentActivitiesModel(
+    AppState* app_state, Gtk::Window* parent_window) noexcept
     : ListModelBase(app_state),
       earliest_start_time_(Activity::GetCurrentTimePoint() -
-          std::chrono::hours(24)) {
+          std::chrono::hours(24)),
+      parent_window_(parent_window) {
+  VERIFY(parent_window_);
   all_connections_.emplace_back(app_state->ConnectExistingActivityChanged(
       sigc::mem_fun(*this, &RecentActivitiesModel::ExistingObjectChanged)));
   all_connections_.emplace_back(app_state->ConnectAfterActivityAdded(
@@ -86,13 +89,37 @@ Glib::RefPtr<Gtk::Widget> RecentActivitiesModel::CreateRowFromObject(
   btn_delete->set_image_from_icon_name("edit-delete");
   btn_delete->show();
   btn_delete->signal_clicked().connect([this, activity_id = *a.id()]() {
-    // TODO(vchigrin): Implement.
-    // DeleteActivity(activity_id);
+    DeleteActivity(activity_id);
   });
   wrapped_row->add(*btn_delete.get());
 
   wrapped_row->show();
   return wrapped_row;
+}
+
+void RecentActivitiesModel::DeleteActivity(Activity::Id activity_id) noexcept {
+  auto maybe_activity = Activity::LoadById(
+      &app_state_->db_for_read_only(), activity_id);
+  VERIFY(maybe_activity);
+  auto maybe_task = Task::LoadById(
+      &app_state_->db_for_read_only(), maybe_activity.value().task_id());
+  VERIFY(maybe_task);
+  // TODO(vchigrin): Localization.
+  const std::string message =
+      (boost::format("Delete activity for task \"%1%\"?") %
+          maybe_task.value().name()).str();
+  Gtk::MessageDialog message_dlg(
+      *parent_window_,
+      message,
+      /* use_markup */ false,
+      Gtk::MESSAGE_QUESTION,
+      Gtk::BUTTONS_YES_NO,
+      /* modal */ true);
+  if (message_dlg.run() == Gtk::RESPONSE_YES) {
+    auto delete_result = app_state_->DeleteActivity(maybe_activity.value());
+    // TODO(vchigrin): Better error handling.
+    VERIFY(delete_result);
+  }
 }
 
 }  // namespace m_time_tracker

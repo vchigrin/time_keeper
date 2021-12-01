@@ -87,6 +87,7 @@ class AppState {
 
   // Returns nullopt if there is no running Task.
   std::optional<Activity::Duration> RunningTaskRunTime() const noexcept;
+  outcome::std_result<void> DeleteActivity(const Activity& activity) noexcept;
 
  private:
   // Expects DB with all tables alaready created.

@@ -126,4 +126,36 @@ Activity Activity::CreateFromSelectRow(SelectRows* row) noexcept {
       end_time_point);
 }
 
+// static
+outcome::std_result<Activity> Activity::LoadById(
+    Database* db, Id id) noexcept {
+  const std::string query = std::string(kBaseSelectQuery) +
+      " WHERE id=" + std::to_string(id);
+  auto maybe_activities = LoadWithQuery(db, query);
+  if (!maybe_activities) {
+    return maybe_activities.error();
+  }
+  const std::vector<Activity>& activities = maybe_activities.value();
+  VERIFY(activities.size() <= 1);
+  if (activities.empty()) {
+    return ErrorCodes::kEmptyResults;
+  }
+  return activities[0];
+}
+
+// static
+outcome::std_result<void> Activity::Delete(Database* db, Id id) noexcept {
+  const std::unordered_map<std::string, Database::Param> params = {
+    {":id", Database::Param(id)},
+  };
+  auto exec_result = db->Execute(
+      "DELETE FROM Activities WHERE id = :id",
+      params);
+  if (exec_result) {
+    return outcome::success();
+  } else {
+    return exec_result.error();
+  }
+}
+
 }  // namespace m_time_tracker

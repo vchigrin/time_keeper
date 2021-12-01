@@ -14,12 +14,16 @@ class AppState;
 class RecentActivitiesModel: public ListModelBase<Activity> {
  protected:
   friend class ListModelBase<Activity>;
-  explicit RecentActivitiesModel(AppState* app_state) noexcept;
+  RecentActivitiesModel(
+      AppState* app_state, Gtk::Window* parent_window) noexcept;
   Glib::RefPtr<Gtk::Widget> CreateRowFromObject(
       const Activity& a) noexcept override;
 
- protected:
+ private:
+  void DeleteActivity(Activity::Id activity_id) noexcept;
+
   Activity::TimePoint earliest_start_time_;
+  Gtk::Window* const parent_window_;
 };
 
 }  // namespace m_time_tracker

@@ -37,6 +37,8 @@ class Activity {
   // Loads all tasks with start time >= earliest_start_time.
   static outcome::std_result<std::vector<Activity>> LoadAfter(
       Database* db, const TimePoint& earliest_start_time) noexcept;
+  static outcome::std_result<Activity> LoadById(Database* db, Id id) noexcept;
+  static outcome::std_result<void> Delete(Database* db, Id id) noexcept;
 
   outcome::std_result<void> Save(Database* db) noexcept;
 

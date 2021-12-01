@@ -90,4 +90,11 @@ std::optional<Activity::Duration>
   }
 }
 
+outcome::std_result<void> AppState::DeleteActivity(
+    const Activity& activity) noexcept {
+  VERIFY(activity.id());
+  sig_before_activity_deleted_(activity);
+  return Activity::Delete(&db_, *activity.id());
+}
+
 }  // namespace m_time_tracker

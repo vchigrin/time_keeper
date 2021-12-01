@@ -172,7 +172,7 @@ MainWindow::MainWindow(
   lst_tasks_->signal_row_selected().connect(
       sigc::mem_fun(*this, &MainWindow::OnLstTasksRowSelected));
   Glib::RefPtr<RecentActivitiesModel> activities_model =
-      RecentActivitiesModel::create<RecentActivitiesModel>(app_state_);
+      RecentActivitiesModel::create<RecentActivitiesModel>(app_state_, this);
   lst_recent_activities_->bind_model(
       activities_model,
       activities_model->slot_create_widget());
