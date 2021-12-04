@@ -44,6 +44,7 @@ outcome::std_result<std::vector<Activity>> Activity::LoadAfter(
 }
 
 outcome::std_result<void> Activity::Save(Database* db) noexcept {
+  VERIFY(!end_time_ || *end_time_ > start_time_);
   if (id_) {
     const std::unordered_map<std::string, Database::Param> params = {
       {":task_id", Database::Param(task_id_)},

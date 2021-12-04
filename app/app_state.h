@@ -19,6 +19,9 @@ class AppState {
       const std::filesystem::path& db_path) noexcept;
 
   outcome::std_result<void> SaveTask(Task* task) noexcept;
+  // Activity must be already present in DB - new activities must be added
+  // through |RecordRunningTaskActivity|.
+  outcome::std_result<void> SaveChangedActivity(Activity* activity) noexcept;
 
   using SignalWithTask = sigc::signal<void(const Task&)>;
   using SlotWithTask = SignalWithTask::slot_type;

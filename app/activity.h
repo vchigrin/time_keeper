@@ -53,6 +53,10 @@ class Activity {
     task_id_ = *t.id();
   }
 
+  void SetTaskId(const Task::Id task_id) noexcept {
+    task_id_ = task_id;
+  }
+
   std::optional<Id> id() const noexcept {
     return id_;
   }
@@ -70,7 +74,6 @@ class Activity {
   }
 
   void SetInterval(const TimePoint& start, const TimePoint& end) noexcept {
-    VERIFY(end > start);
     start_time_ = start;
     end_time_ = end;
   }

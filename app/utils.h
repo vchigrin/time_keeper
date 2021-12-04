@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <ctime>
 #include <string>
 #include "app/activity.h"
 
@@ -17,5 +18,8 @@ enum class FormatMode {
 std::string FormatRuntime(
     Activity::Duration runtime, FormatMode mode) noexcept;
 std::string FormatTimePoint(Activity::TimePoint time_point) noexcept;
+
+std::tm TimePointToLocal(Activity::TimePoint time_point) noexcept;
+Activity::TimePoint TimePointFromLocal(std::tm local_time) noexcept;
 
 }  // namespace m_time_tracker

@@ -51,12 +51,24 @@ std::string FormatRuntime(
   }
 }
 
-std::string FormatTimePoint(Activity::TimePoint time_point) noexcept {
+std::tm TimePointToLocal(Activity::TimePoint time_point) noexcept {
   const std::time_t tp = std::chrono::system_clock::to_time_t(time_point);
   const std::tm* local_time = std::localtime(&tp);
   VERIFY(local_time);
+  return *local_time;
+}
+
+Activity::TimePoint TimePointFromLocal(std::tm local_time) noexcept {
+  const std::time_t tp = std::mktime(&local_time);
+  VERIFY(tp != -1);
+  return std::chrono::floor<Activity::Duration>(
+      std::chrono::system_clock::from_time_t(tp));
+}
+
+std::string FormatTimePoint(Activity::TimePoint time_point) noexcept {
+  const std::tm local_time = TimePointToLocal(time_point);
   std::stringstream sstrm;
-  sstrm << std::put_time(local_time, "%b %d %H:%M");
+  sstrm << std::put_time(&local_time, "%b %d %H:%M");
   return sstrm.str();
 }
 

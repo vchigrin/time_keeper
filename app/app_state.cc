@@ -43,6 +43,17 @@ outcome::std_result<void> AppState::SaveTask(Task* task) noexcept {
   return save_result;
 }
 
+outcome::std_result<void> AppState::SaveChangedActivity(
+    Activity* activity) noexcept {
+  VERIFY(activity);
+  VERIFY(activity->id());
+  outcome::std_result<void> save_result = activity->Save(&db_);
+  if (save_result) {
+    sig_existing_activity_changed_(*activity);
+  }
+  return save_result;
+}
+
 void AppState::StartRunningTask(Task new_task) noexcept {
   VERIFY(new_task.id());
   running_task_ = std::move(new_task);

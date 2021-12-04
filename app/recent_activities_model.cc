@@ -5,6 +5,7 @@
 #include "app/recent_activities_model.h"
 
 #include <string>
+#include <utility>
 
 #include <boost/format.hpp>
 
@@ -25,11 +26,14 @@ std::string CreateSubtitle(const Activity& a) {
 }  // namespace
 
 RecentActivitiesModel::RecentActivitiesModel(
-    AppState* app_state, Gtk::Window* parent_window) noexcept
+    AppState* app_state,
+    Gtk::Window* parent_window,
+    Glib::RefPtr<Gtk::Builder> resource_builder) noexcept
     : ListModelBase(app_state),
       earliest_start_time_(Activity::GetCurrentTimePoint() -
           std::chrono::hours(24)),
-      parent_window_(parent_window) {
+      parent_window_(parent_window),
+      resource_builder_(std::move(resource_builder)) {
   VERIFY(parent_window_);
   all_connections_.emplace_back(app_state->ConnectExistingActivityChanged(
       sigc::mem_fun(*this, &RecentActivitiesModel::ExistingObjectChanged)));
@@ -80,8 +84,7 @@ Glib::RefPtr<Gtk::Widget> RecentActivitiesModel::CreateRowFromObject(
   btn_edit->set_image_from_icon_name("gtk-edit");
   btn_edit->show();
   btn_edit->signal_clicked().connect([this, activity_id = *a.id()]() {
-    // TODO(vchigrin): Implement.
-    // EditActivity(activity_id);
+    EditActivity(activity_id);
   });
   wrapped_row->add(*btn_edit.get());
 
@@ -120,6 +123,45 @@ void RecentActivitiesModel::DeleteActivity(Activity::Id activity_id) noexcept {
     // TODO(vchigrin): Better error handling.
     VERIFY(delete_result);
   }
+}
+
+void RecentActivitiesModel::EditActivity(Activity::Id activity_id) noexcept {
+  auto maybe_activity = Activity::LoadById(
+      &app_state_->db_for_read_only(), activity_id);
+  VERIFY(maybe_activity);
+  Activity& activity = maybe_activity.value();
+  if (!edit_activity_dialog_) {
+    // Create dialog just once, then re-use it. If we destoy it GtkBuilder
+    // will still attempt to return reference to the old object.
+    edit_activity_dialog_ =
+      GetWindowDerived<EditActivityDialog>(
+          resource_builder_, "edit_activity_dialog", app_state_);
+  }
+  edit_activity_dialog_->set_activity(&activity);
+  while (true) {
+    const int result = edit_activity_dialog_->run();
+    if (result != Gtk::RESPONSE_OK) {
+      break;
+    }
+    if (activity.end_time() <= activity.start_time()) {
+      Gtk::MessageDialog message_dlg(
+          *edit_activity_dialog_,
+          // TODO(vchigrin): Localization.
+          "Error - end time must be after start time.",
+          /* use_markup */ false,
+          Gtk::MESSAGE_ERROR,
+          Gtk::BUTTONS_OK,
+          /* modal */ true);
+      message_dlg.run();
+      continue;
+    }
+    auto save_result = app_state_->SaveChangedActivity(&activity);
+    // TODO(vchigrin): Better error handling.
+    VERIFY(save_result);
+    break;
+  }
+  edit_activity_dialog_->set_activity(nullptr);
+  edit_activity_dialog_->hide();
 }
 
 }  // namespace m_time_tracker
