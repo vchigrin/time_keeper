@@ -150,7 +150,8 @@ MainWindow::MainWindow(
     AppState* app_state)
     : Gtk::Window(wnd),
       resource_builder_(builder),
-      app_state_(app_state) {
+      app_state_(app_state),
+      statistics_view_(this, builder, app_state) {
   VERIFY(app_state_);
   InitializeWidgetPointers(builder);
   page_stack_->property_visible_child().signal_changed().connect(
@@ -208,6 +209,7 @@ void MainWindow::InitializeWidgetPointers(
       builder, "lst_recent_activities");
   btn_start_stop_ = GetWidgetChecked<Gtk::Button>(builder, "btn_start_stop");
   btn_make_record_ = GetWidgetChecked<Gtk::Button>(builder, "btn_make_record");
+  box_statistics_ = GetWidgetChecked<Gtk::Box>(builder, "box_statistics");
 }
 
 void MainWindow::OnBtnMenuClicked() noexcept {
@@ -262,6 +264,9 @@ void MainWindow::EditTask(Task* task) noexcept {
 
 void MainWindow::OnPageStackVisibleChildChanged() noexcept {
   main_stack_->set_visible_child(*page_stack_);
+  if (page_stack_->get_visible_child() == box_statistics_) {
+    statistics_view_.Recalculate();
+  }
 }
 
 void MainWindow::OnBtnStartStopClicked() noexcept {

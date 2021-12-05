@@ -72,4 +72,22 @@ std::string FormatTimePoint(Activity::TimePoint time_point) noexcept {
   return sstrm.str();
 }
 
+Activity::TimePoint GetLocalEndDayTimepoint(
+    Activity::TimePoint reference) noexcept {
+  std::tm local_time = TimePointToLocal(reference);
+  local_time.tm_hour = 23;
+  local_time.tm_min = 59;
+  local_time.tm_sec = 59;
+  return TimePointFromLocal(local_time);
+}
+
+Activity::TimePoint GetLocalStartDayTimepoint(
+    Activity::TimePoint reference) noexcept {
+  std::tm local_time = TimePointToLocal(reference);
+  local_time.tm_hour = 0;
+  local_time.tm_min = 0;
+  local_time.tm_sec = 0;
+  return TimePointFromLocal(local_time);
+}
+
 }  // namespace m_time_tracker

@@ -22,4 +22,13 @@ std::string FormatTimePoint(Activity::TimePoint time_point) noexcept;
 std::tm TimePointToLocal(Activity::TimePoint time_point) noexcept;
 Activity::TimePoint TimePointFromLocal(std::tm local_time) noexcept;
 
+// Returns TimePoint, represents biggest TimePoint in the same local day,
+// to which |reference| TimePoint belongs.
+Activity::TimePoint GetLocalEndDayTimepoint(
+    Activity::TimePoint reference) noexcept;
+// Returns TimePoint, represents smallest TimePoint in the same local day,
+// to which |reference| TimePoint belongs.
+Activity::TimePoint GetLocalStartDayTimepoint(
+    Activity::TimePoint reference) noexcept;
+
 }  // namespace m_time_tracker
