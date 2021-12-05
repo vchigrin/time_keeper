@@ -159,4 +159,48 @@ outcome::std_result<void> Activity::Delete(Database* db, Id id) noexcept {
   }
 }
 
+// static
+outcome::std_result<std::vector<Activity::StatEntry>>
+    Activity::LoadStatsForInterval(
+        Database* db,
+        const TimePoint& interval_start,
+        const TimePoint& interval_end) noexcept {
+  if (interval_start >= interval_end) {
+    return std::vector<StatEntry>{};
+  }
+  static constexpr std::string_view kQuery = (
+      "SELECT task_id, "
+      " SUM(MIN(end_time, :interval_end) - MAX(start_time, :interval_start)) "
+      " FROM Activities "
+      " WHERE (end_time >= :interval_start AND end_time < :interval_end) OR "
+      "  (start_time >= :interval_start AND start_time < :interval_end) OR "
+      "  (start_time < :interval_start AND end_time > :interval_end) "
+      " GROUP BY task_id");
+  const std::unordered_map<std::string, Database::Param> params = {
+      {":interval_start", Database::Param(IntFromTimePoint(interval_start))},
+      {":interval_end", Database::Param(IntFromTimePoint(interval_end))},
+  };
+  auto maybe_rows = db->Select(kQuery, params);
+  if (!maybe_rows) {
+    return maybe_rows.error();
+  }
+  SelectRows& rows = maybe_rows.value();
+  std::vector<StatEntry> result;
+  while (true) {
+    const auto next_outcome = rows.NextRow();
+    if (next_outcome == SelectRows::kOutcomeDone) {
+      break;
+    }
+    if (!next_outcome) {
+      return next_outcome.error();
+    }
+    const std::optional<int64_t> task_id = rows.Int64Column(0);
+    const std::optional<int64_t> duration = rows.Int64Column(1);
+    VERIFY(task_id);
+    VERIFY(duration);
+    result.emplace_back(*task_id, DurationFromInt(*duration));
+  }
+  return result;
+}
+
 }  // namespace m_time_tracker

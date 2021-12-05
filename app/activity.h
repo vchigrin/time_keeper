@@ -27,6 +27,14 @@ class Activity {
   // In UTC.
   using TimePoint =
       std::chrono::time_point<std::chrono::system_clock, Duration>;
+  struct StatEntry {
+    StatEntry(Task::Id id, Duration d) noexcept
+        : task_id(id),
+          duration(d) {}
+
+    Task::Id task_id;
+    Duration duration;
+  };
 
   static outcome::std_result<void> EnsureTableCreated(Database* db) noexcept;
 
@@ -38,6 +46,16 @@ class Activity {
   static outcome::std_result<std::vector<Activity>> LoadAfter(
       Database* db, const TimePoint& earliest_start_time) noexcept;
   static outcome::std_result<Activity> LoadById(Database* db, Id id) noexcept;
+
+  // Returns statistics for specified interval.
+  // If some Activity overlaps interval boundary, only part of the
+  // activity that in the boundary will be accounted.
+  // Not completed activities are not accounted.
+  static outcome::std_result<std::vector<StatEntry>>
+      LoadStatsForInterval(
+          Database* db,
+          const TimePoint& interval_start,
+          const TimePoint& interval_end) noexcept;
   static outcome::std_result<void> Delete(Database* db, Id id) noexcept;
 
   outcome::std_result<void> Save(Database* db) noexcept;
@@ -113,6 +131,10 @@ class Activity {
         sizeof(time_val) == sizeof(int64_t),
         "Assume time_t is number of seconds since Jan 1. 1970");
     return static_cast<int64_t>(time_val);
+  }
+
+  static Duration DurationFromInt(int64_t duration) noexcept {
+    return std::chrono::seconds(duration);
   }
 
   static std::optional<int64_t> IntFromTimePoint(

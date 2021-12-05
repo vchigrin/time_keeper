@@ -308,3 +308,104 @@ TEST_F(DbEntitiesTest, ActivityLoad) {
     EXPECT_EQ(loaded_ids, expected_ids);
   }
 }
+
+TEST_F(DbEntitiesTest, ActivityStats) {
+  Task foo("foo");
+  Task bar("bar");
+
+  ASSERT_TRUE(foo.Save(db()));
+  ASSERT_TRUE(bar.Save(db()));
+
+  const Activity::TimePoint start_time =
+      std::chrono::floor<std::chrono::seconds>(
+          std::chrono::system_clock::now());
+
+  // Activity list:
+  // 1. Foo: start, start + 5min
+  // 2. Bar: start + 5 min, start + 13 min
+  // 3. Foo: start + 13 min, start + 20 min
+  // 4. Bar: start + 20 min, NULL (still running).
+  {
+    // 1. Foo: start, start + 5min
+    Activity a(foo, start_time);
+    a.SetInterval(start_time, start_time + std::chrono::minutes(5));
+    ASSERT_TRUE(a.Save(db()));
+  }
+  {
+    // 2. Bar: start + 5 min, start + 13 min
+    Activity a(bar, start_time);
+    a.SetInterval(
+        start_time + std::chrono::minutes(5),
+        start_time + std::chrono::minutes(13));
+    ASSERT_TRUE(a.Save(db()));
+  }
+  {
+    // 3. Foo: start + 13 min, start + 20 min
+    Activity a(foo, start_time);
+    a.SetInterval(
+        start_time + std::chrono::minutes(13),
+        start_time + std::chrono::minutes(20));
+    ASSERT_TRUE(a.Save(db()));
+  }
+  {
+    // 4. Bar: start + 20 min, NULL (still running).
+    Activity a(bar, start_time + std::chrono::minutes(20));
+    ASSERT_TRUE(a.Save(db()));
+  }
+  auto assert_results = [](
+      const outcome::std_result<std::vector<Activity::StatEntry>>&
+          result_outcome,
+      const std::unordered_map<Task::Id, Activity::Duration>& expected) {
+    ASSERT_TRUE(result_outcome);
+    const std::vector<Activity::StatEntry>& result = result_outcome.value();
+    ASSERT_EQ(result.size(), expected.size());
+    for (const auto& entry : result) {
+      auto it_expected = expected.find(entry.task_id);
+      ASSERT_TRUE(it_expected != expected.end());
+      ASSERT_EQ(entry.duration, it_expected->second);
+    }
+  };
+
+  { // Interval covers all entries.
+    auto maybe_result = Activity::LoadStatsForInterval(
+        db(),
+        start_time,
+        start_time + std::chrono::minutes(20));
+    assert_results(maybe_result, {
+      {*foo.id(), std::chrono::minutes(12)},
+      {*bar.id(), std::chrono::minutes(8)},
+    });
+  }
+  {
+    // Interval partially intersects first entry at start.
+    auto maybe_result = Activity::LoadStatsForInterval(
+        db(),
+        start_time - std::chrono::minutes(1),
+        start_time + std::chrono::minutes(3));
+    assert_results(maybe_result, {
+      {*foo.id(), std::chrono::minutes(3)},
+    });
+  }
+  {
+    // Interval partially intersects first entry at end and
+    // second entry at start.
+    auto maybe_result = Activity::LoadStatsForInterval(
+        db(),
+        start_time + std::chrono::minutes(3),
+        start_time + std::chrono::minutes(9));
+    assert_results(maybe_result, {
+      {*foo.id(), std::chrono::minutes(2)},
+      {*bar.id(), std::chrono::minutes(4)},
+    });
+  }
+  {
+    // First entry fully covers interval.
+    auto maybe_result = Activity::LoadStatsForInterval(
+        db(),
+        start_time + std::chrono::minutes(1),
+        start_time + std::chrono::minutes(2));
+    assert_results(maybe_result, {
+      {*foo.id(), std::chrono::minutes(1)},
+    });
+  }
+}
