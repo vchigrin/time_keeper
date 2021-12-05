@@ -60,7 +60,6 @@ class MainWindow : public Gtk::Window {
   Gtk::StackSidebar* page_stack_sidebar_ = nullptr;
   Glib::RefPtr<Gtk::Builder> resource_builder_;
   AppState* const app_state_;
-  std::unique_ptr<EditTaskDialog> edit_task_dialog_;
   sigc::connection running_task_changed_connection_;
   Glib::RefPtr<TaskListModelBase> task_list_model_;
   // Timer is active only when task is running.

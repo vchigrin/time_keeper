@@ -127,18 +127,14 @@ void EditActivityDialog::InitializeWidgetPointers(
 }
 
 void EditActivityDialog::EditDate(std::tm* datetime) noexcept {
-  if (!edit_date_dialog_) {
-    // Create dialog just once, then re-use it. If we destoy it GtkBuilder
-    // will still attempt to return reference to the old object.
-    edit_date_dialog_ =
+  Glib::RefPtr<EditDateDialog> edit_date_dialog =
       GetWindowDerived<EditDateDialog>(
           resource_builder_, "edit_date_dialog");
-  }
-  edit_date_dialog_->set_date(*datetime);
-  const int result = edit_date_dialog_->run();
-  edit_date_dialog_->hide();
+  edit_date_dialog->set_date(*datetime);
+  const int result = edit_date_dialog->run();
+  edit_date_dialog->hide();
   if (result == Gtk::RESPONSE_OK) {
-    *datetime = edit_date_dialog_->get_date();
+    *datetime = edit_date_dialog->get_date();
   }
 }
 

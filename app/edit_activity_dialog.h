@@ -50,7 +50,6 @@ class EditActivityDialog : public Gtk::Dialog {
   Gtk::SpinButton* spn_end_minutes_ = nullptr;
   std::tm start_time_;
   std::tm end_time_;
-  std::unique_ptr<EditDateDialog> edit_date_dialog_;
   Glib::RefPtr<Gtk::Builder> resource_builder_;
   AppState* const app_state_;
 };

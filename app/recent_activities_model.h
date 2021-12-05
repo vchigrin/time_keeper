@@ -30,7 +30,6 @@ class RecentActivitiesModel: public ListModelBase<Activity> {
 
   Activity::TimePoint earliest_start_time_;
   Gtk::Window* const parent_window_;
-  std::unique_ptr<EditActivityDialog> edit_activity_dialog_;
   Glib::RefPtr<Gtk::Builder> resource_builder_;
 };
 

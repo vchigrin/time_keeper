@@ -65,10 +65,10 @@ int main(int argc, char* argv[]) {
 
   m_time_tracker::AppState app_state(std::move(maybe_app_state.value()));
 
-  std::unique_ptr<m_time_tracker::MainWindow> wnd =
+  Glib::RefPtr<m_time_tracker::MainWindow> wnd =
       m_time_tracker::GetWindowDerived<m_time_tracker::MainWindow>(
           builder, "main_window",
           &app_state);
 
-  return app->run(*wnd, argc, argv);
+  return app->run(*wnd.get(), argc, argv);
 }

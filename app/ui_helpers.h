@@ -28,10 +28,10 @@
 
 namespace m_time_tracker {
 
-// Wraps top-level widget, that must be deleted by application code, and not
-// by Gtk::Builder.
+// Wraps top-level widget. Note that C++ object for it is alive till
+// Gtk::Builder is alive since it holds reference to it.
 template<typename T, typename... Args>
-std::unique_ptr<T> GetWindowDerived(
+Glib::RefPtr<T> GetWindowDerived(
     const Glib::RefPtr<Gtk::Builder>& builder,
     const Glib::ustring& name,
     Args&&... args) noexcept {
@@ -39,7 +39,9 @@ std::unique_ptr<T> GetWindowDerived(
   VERIFY(builder);
   builder->get_widget_derived(name, result, std::forward<Args>(args)...);
   VERIFY(result);
-  return std::unique_ptr<T>(result);
+  Glib::RefPtr<T> result_ptr(result);
+  result_ptr->reference();
+  return result_ptr;
 }
 
 template<typename T>

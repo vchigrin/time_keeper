@@ -130,22 +130,18 @@ void RecentActivitiesModel::EditActivity(Activity::Id activity_id) noexcept {
       &app_state_->db_for_read_only(), activity_id);
   VERIFY(maybe_activity);
   Activity& activity = maybe_activity.value();
-  if (!edit_activity_dialog_) {
-    // Create dialog just once, then re-use it. If we destoy it GtkBuilder
-    // will still attempt to return reference to the old object.
-    edit_activity_dialog_ =
+  Glib::RefPtr<EditActivityDialog> edit_activity_dialog =
       GetWindowDerived<EditActivityDialog>(
           resource_builder_, "edit_activity_dialog", app_state_);
-  }
-  edit_activity_dialog_->set_activity(&activity);
+  edit_activity_dialog->set_activity(&activity);
   while (true) {
-    const int result = edit_activity_dialog_->run();
+    const int result = edit_activity_dialog->run();
     if (result != Gtk::RESPONSE_OK) {
       break;
     }
     if (activity.end_time() <= activity.start_time()) {
       Gtk::MessageDialog message_dlg(
-          *edit_activity_dialog_,
+          *edit_activity_dialog.get(),
           // TODO(vchigrin): Localization.
           "Error - end time must be after start time.",
           /* use_markup */ false,
@@ -160,8 +156,10 @@ void RecentActivitiesModel::EditActivity(Activity::Id activity_id) noexcept {
     VERIFY(save_result);
     break;
   }
-  edit_activity_dialog_->set_activity(nullptr);
-  edit_activity_dialog_->hide();
+  // Ensure we'll never produce dangling pointers. Note, that dialog object
+  // may re reused since Gtk::Builder holds reference to it.
+  edit_activity_dialog->set_activity(nullptr);
+  edit_activity_dialog->hide();
 }
 
 }  // namespace m_time_tracker

@@ -224,15 +224,11 @@ void MainWindow::OnBtnNewTaskClicked() noexcept {
 }
 
 void MainWindow::EditTask(Task* task) noexcept {
-  if (!edit_task_dialog_) {
-    // Create dialog just once, then re-use it. If we destoy it GtkBuilder
-    // will still attempt to return reference to the old object.
-    edit_task_dialog_ =
+  Glib::RefPtr<EditTaskDialog> edit_task_dialog =
       GetWindowDerived<EditTaskDialog>(resource_builder_, "edit_task_dialog");
-  }
-  edit_task_dialog_->set_task(task);
+  edit_task_dialog->set_task(task);
   while (true) {
-    if (edit_task_dialog_->run() != Gtk::RESPONSE_OK) {
+    if (edit_task_dialog->run() != Gtk::RESPONSE_OK) {
       break;
     }
     // Check for already present task with that name.
@@ -258,9 +254,10 @@ void MainWindow::EditTask(Task* task) noexcept {
     VERIFY(save_result);
     break;
   }
-  // Ensure we'll never produce dangling pointers.
-  edit_task_dialog_->set_task(nullptr);
-  edit_task_dialog_->hide();
+  // Ensure we'll never produce dangling pointers. Note, that dialog object
+  // may re reused since Gtk::Builder holds reference to it.
+  edit_task_dialog->set_task(nullptr);
+  edit_task_dialog->hide();
 }
 
 void MainWindow::OnPageStackVisibleChildChanged() noexcept {
