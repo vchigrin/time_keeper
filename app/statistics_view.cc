@@ -4,7 +4,11 @@
 
 #include "app/statistics_view.h"
 
+#include <pangomm/layout.h>
+
 #include <sstream>
+#include <string>
+#include <utility>
 
 #include "app/edit_date_dialog.h"
 #include "app/ui_helpers.h"
@@ -51,6 +55,12 @@ StatisticsView::StatisticsView(
   });
   drawing_->signal_draw().connect(
       sigc::mem_fun(*this, &StatisticsView::StatisticsDraw));
+  existing_task_changed_connection_ = app_state_->ConnectExistingTaskChanged(
+      sigc::mem_fun(*this, &StatisticsView::OnExistingTaskChanged));
+}
+
+StatisticsView::~StatisticsView() {
+  existing_task_changed_connection_.disconnect();
 }
 
 void StatisticsView::InitializeWidgetPointers(
@@ -79,12 +89,139 @@ void StatisticsView::EditDate(Activity::TimePoint* timepoint) noexcept {
 
 bool StatisticsView::StatisticsDraw(
     const Cairo::RefPtr<Cairo::Context>& ctx) noexcept {
-  (void)ctx;
+  if (displayed_stats_.empty()) {
+    return true;
+  }
+
+  const Glib::RefPtr<Gtk::StyleContext> style_context =
+      drawing_->get_style_context();
+  const Pango::FontDescription font_description =
+      style_context->get_font(style_context->get_state());
+  Glib::RefPtr<Pango::Layout> pango_layout = Pango::Layout::create(ctx);
+  pango_layout->set_font_description(font_description);
+  pango_layout->set_ellipsize(Pango::ELLIPSIZE_END);
+
+  Activity::Duration total_duration{};
+  for (const Activity::StatEntry& entry : displayed_stats_) {
+    total_duration += entry.duration;
+  }
+  const int control_width = drawing_->get_allocated_width();
+  double current_y = 0.5;
+  ctx->set_line_width(1);
+  for (const Activity::StatEntry& entry : displayed_stats_) {
+    const auto it_task = tasks_cache_.find(entry.task_id);
+    VERIFY(it_task != tasks_cache_.end());
+    const Cairo::RectangleInt stat_entry_rect = DrawStatEntryRect(
+        ctx,
+        control_width,
+        current_y,
+        pango_layout,
+        total_duration,
+        entry.duration,
+        it_task->second);
+    current_y += stat_entry_rect.height;
+  }
   return true;  // Don't invoke any other "draw" event handlers.
 }
 
-void StatisticsView::Recalculate() noexcept {
-  // TODO(vchigrin): Load stats from DB.
+Cairo::RectangleInt StatisticsView::DrawStatEntryRect(
+    const Cairo::RefPtr<Cairo::Context>& ctx,
+    int control_width,
+    double current_y,
+    const Glib::RefPtr<Pango::Layout>& pango_layout,
+    const Activity::Duration& total_duration,
+    const Activity::Duration& task_duration,
+    const Task& task) const noexcept {
+  static constexpr int kBarPadding = 10;
+  static constexpr int kMinTaskNameWidth = 25;
+
+  VERIFY(total_duration >= task_duration);
+  const auto bar_width = (task_duration * control_width) / total_duration;
+
+  const std::string duration_text =
+      FormatRuntime(task_duration, FormatMode::kLongWithoutSeconds) + ": ";
+
+  const Glib::RefPtr<Pango::Layout> duration_layout = pango_layout->copy();
+  duration_layout->set_text(duration_text);
+  const auto duration_rect = duration_layout->get_logical_extents();
+
+  const Glib::RefPtr<Pango::Layout> task_name_layout = pango_layout->copy();
+  const int task_name_width =
+      std::max(
+          kMinTaskNameWidth * Pango::SCALE,
+          (control_width - 2 * kBarPadding) * Pango::SCALE -
+              duration_rect.get_width());
+  task_name_layout->set_width(task_name_width);
+  task_name_layout->set_text(task.name());
+  const auto task_name_rect = task_name_layout->get_logical_extents();
+
+  const double max_text_height = static_cast<double>(std::max(
+      duration_rect.get_height(), task_name_rect.get_height()))
+          / Pango::SCALE;
+
+  const double bar_height = max_text_height + 2 * kBarPadding;
+
+  ctx->rectangle(0.5, current_y, static_cast<double>(bar_width), bar_height);
+  ctx->save();
+  // Light blue
+  ctx->set_source_rgb(0, 128, 255);
+  ctx->fill_preserve();
+  ctx->restore();
+  ctx->stroke();
+
+  // Dark blue.
+  ctx->set_source_rgb(0, 0, 255);
+  double text_x =
+      static_cast<double>(duration_rect.get_x()) / Pango::SCALE +
+          kBarPadding;
+  ctx->move_to(text_x, current_y + kBarPadding);
+  duration_layout->show_in_cairo_context(ctx);
+
+  text_x += static_cast<double>(duration_rect.get_width()) / Pango::SCALE;
+  // Black
+  ctx->set_source_rgb(0, 0, 0);
+  ctx->move_to(text_x, current_y + kBarPadding);
+  task_name_layout->show_in_cairo_context(ctx);
+  Cairo::RectangleInt result;
+  result.x = 0;
+  result.y = static_cast<int>(current_y);
+  result.width = control_width;
+  result.height = static_cast<int>(bar_height);
+  return result;
 }
 
+void StatisticsView::Recalculate() noexcept {
+  auto maybe_stats = Activity::LoadStatsForInterval(
+      &app_state_->db_for_read_only(),
+      from_time_, to_time_);
+  // TODO(vchigrin): Better error handling.
+  VERIFY(maybe_stats);
+  displayed_stats_ = std::move(maybe_stats.value());
+  std::sort(
+      displayed_stats_.begin(),
+      displayed_stats_.end(),
+      [](const Activity::StatEntry& first, const Activity::StatEntry& second) {
+      // Sort by duration, descending.
+      return first.duration > second.duration;
+  });
+  drawing_->queue_draw();
+  for (const Activity::StatEntry& entry : displayed_stats_) {
+    if (tasks_cache_.count(entry.task_id) == 0) {
+      auto maybe_task = Task::LoadById(
+          &app_state_->db_for_read_only(),
+          entry.task_id);
+      // TODO(vchigrin): Better error handling.
+      VERIFY(maybe_task);
+      tasks_cache_.insert({entry.task_id, std::move(maybe_task.value())});
+    }
+  }
+}
+
+void StatisticsView::OnExistingTaskChanged(const Task& task) noexcept {
+  VERIFY(task.id());
+  auto it = tasks_cache_.find(*task.id());
+  if (it != tasks_cache_.end()) {
+    it->second = task;
+  }
+}
 }  // namespace m_time_tracker
