@@ -172,6 +172,8 @@ MainWindow::MainWindow(
       task_list_model_->slot_create_widget());
   lst_tasks_->signal_row_selected().connect(
       sigc::mem_fun(*this, &MainWindow::OnLstTasksRowSelected));
+  page_stack_sidebar_->signal_button_release_event().connect(
+      sigc::mem_fun(*this, &MainWindow::OnStackSidebarButtonReleased));
   Glib::RefPtr<RecentActivitiesModel> activities_model =
       RecentActivitiesModel::create<RecentActivitiesModel>(
           app_state_, this, resource_builder_);
@@ -218,6 +220,11 @@ void MainWindow::OnBtnMenuClicked() noexcept {
   } else {
     main_stack_->set_visible_child(*page_stack_);
   }
+}
+
+bool MainWindow::OnStackSidebarButtonReleased(GdkEventButton*) noexcept {
+  main_stack_->set_visible_child(*page_stack_);
+  return false;  // Allow event propagation.
 }
 
 void MainWindow::OnBtnNewTaskClicked() noexcept {

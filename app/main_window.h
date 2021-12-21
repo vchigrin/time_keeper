@@ -33,6 +33,7 @@ class MainWindow : public Gtk::Window {
       const Glib::RefPtr<Gtk::Builder>& builder) noexcept;
 
   void OnBtnMenuClicked() noexcept;
+  bool OnStackSidebarButtonReleased(GdkEventButton*) noexcept;
   void OnBtnNewTaskClicked() noexcept;
   void OnPageStackVisibleChildChanged() noexcept;
   void RefreshTasksList() noexcept;
