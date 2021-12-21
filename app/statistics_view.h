@@ -41,6 +41,9 @@ class StatisticsView {
       const Activity::Duration& total_duration,
       const Activity::Duration& task_duration,
       const Task& task) const noexcept;
+  void SetFontForBarDrawing(
+      const Glib::RefPtr<Pango::Layout>& pango_layout) noexcept;
+  int CalculageContentHeight() noexcept;
 
   Gtk::Button* btn_to_ = nullptr;
   Gtk::Button* btn_from_ = nullptr;

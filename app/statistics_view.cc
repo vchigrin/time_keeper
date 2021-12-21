@@ -18,6 +18,8 @@ namespace m_time_tracker {
 
 namespace {
 
+constexpr int kBarPadding = 10;
+
 void SetDateToButton(
     const Activity::TimePoint time_point,
     Gtk::Button* date_button) noexcept {
@@ -25,6 +27,49 @@ void SetDateToButton(
   std::stringstream sstrm;
   sstrm << std::put_time(&local_time, "%Y %B %d");
   date_button->set_label(sstrm.str());
+}
+
+struct BarLayoutInfo {
+  double bar_height;
+  Glib::RefPtr<Pango::Layout> duration_layout;
+  Glib::RefPtr<Pango::Layout> task_name_layout;
+};
+
+BarLayoutInfo MakeBarLayout(
+    const Glib::RefPtr<Pango::Layout>& pango_layout,
+    int control_width,
+    const Activity::Duration& task_duration,
+    const Task& task) noexcept {
+  static constexpr int kMinTaskNameWidth = 25;
+
+  const std::string duration_text =
+      FormatRuntime(task_duration, FormatMode::kLongWithoutSeconds) + ": ";
+
+  BarLayoutInfo result;
+  result.duration_layout = pango_layout->copy();
+  result.duration_layout->set_text(duration_text);
+
+  const auto duration_rect = result.duration_layout->get_logical_extents();
+
+  result.task_name_layout = pango_layout->copy();
+  const int task_name_width =
+      std::max(
+          kMinTaskNameWidth * Pango::SCALE,
+          (control_width - 2 * kBarPadding) * Pango::SCALE -
+              duration_rect.get_width());
+  result.task_name_layout->set_width(task_name_width);
+  result.task_name_layout->set_text(task.name());
+
+  const auto task_name_rect =
+      result.task_name_layout->get_logical_extents();
+
+  const double max_text_height = static_cast<double>(std::max(
+      duration_rect.get_height(), task_name_rect.get_height()))
+          / Pango::SCALE;
+
+  result.bar_height = max_text_height + 2 * kBarPadding;
+
+  return result;
 }
 
 }  // namespace
@@ -92,14 +137,8 @@ bool StatisticsView::StatisticsDraw(
   if (displayed_stats_.empty()) {
     return true;
   }
-
-  const Glib::RefPtr<Gtk::StyleContext> style_context =
-      drawing_->get_style_context();
-  const Pango::FontDescription font_description =
-      style_context->get_font(style_context->get_state());
   Glib::RefPtr<Pango::Layout> pango_layout = Pango::Layout::create(ctx);
-  pango_layout->set_font_description(font_description);
-  pango_layout->set_ellipsize(Pango::ELLIPSIZE_END);
+  SetFontForBarDrawing(pango_layout);
 
   Activity::Duration total_duration{};
   for (const Activity::StatEntry& entry : displayed_stats_) {
@@ -124,6 +163,35 @@ bool StatisticsView::StatisticsDraw(
   return true;  // Don't invoke any other "draw" event handlers.
 }
 
+void StatisticsView::SetFontForBarDrawing(
+    const Glib::RefPtr<Pango::Layout>& pango_layout) noexcept {
+  const Glib::RefPtr<Gtk::StyleContext> style_context =
+      drawing_->get_style_context();
+  const Pango::FontDescription font_description =
+      style_context->get_font(style_context->get_state());
+  pango_layout->set_font_description(font_description);
+  pango_layout->set_ellipsize(Pango::ELLIPSIZE_END);
+}
+
+int StatisticsView::CalculageContentHeight() noexcept {
+  const int control_width = drawing_->get_allocated_width();
+  Glib::RefPtr<Pango::Layout> pango_layout = Pango::Layout::create(
+      drawing_->get_pango_context());
+  SetFontForBarDrawing(pango_layout);
+  double result = 0;
+  for (const Activity::StatEntry& entry : displayed_stats_) {
+    const auto it_task = tasks_cache_.find(entry.task_id);
+    VERIFY(it_task != tasks_cache_.end());
+    const BarLayoutInfo layout_info = MakeBarLayout(
+        pango_layout,
+        control_width,
+        entry.duration,
+        it_task->second);
+    result += layout_info.bar_height;
+  }
+  return static_cast<int>(result);
+}
+
 Cairo::RectangleInt StatisticsView::DrawStatEntryRect(
     const Cairo::RefPtr<Cairo::Context>& ctx,
     int control_width,
@@ -132,36 +200,20 @@ Cairo::RectangleInt StatisticsView::DrawStatEntryRect(
     const Activity::Duration& total_duration,
     const Activity::Duration& task_duration,
     const Task& task) const noexcept {
-  static constexpr int kBarPadding = 10;
-  static constexpr int kMinTaskNameWidth = 25;
+  const BarLayoutInfo layout_info = MakeBarLayout(
+      pango_layout,
+      control_width,
+      task_duration,
+      task);
 
   VERIFY(total_duration >= task_duration);
   const auto bar_width = (task_duration * control_width) / total_duration;
 
-  const std::string duration_text =
-      FormatRuntime(task_duration, FormatMode::kLongWithoutSeconds) + ": ";
+  const auto duration_rect =
+      layout_info.duration_layout->get_logical_extents();
 
-  const Glib::RefPtr<Pango::Layout> duration_layout = pango_layout->copy();
-  duration_layout->set_text(duration_text);
-  const auto duration_rect = duration_layout->get_logical_extents();
-
-  const Glib::RefPtr<Pango::Layout> task_name_layout = pango_layout->copy();
-  const int task_name_width =
-      std::max(
-          kMinTaskNameWidth * Pango::SCALE,
-          (control_width - 2 * kBarPadding) * Pango::SCALE -
-              duration_rect.get_width());
-  task_name_layout->set_width(task_name_width);
-  task_name_layout->set_text(task.name());
-  const auto task_name_rect = task_name_layout->get_logical_extents();
-
-  const double max_text_height = static_cast<double>(std::max(
-      duration_rect.get_height(), task_name_rect.get_height()))
-          / Pango::SCALE;
-
-  const double bar_height = max_text_height + 2 * kBarPadding;
-
-  ctx->rectangle(0.5, current_y, static_cast<double>(bar_width), bar_height);
+  ctx->rectangle(
+      0.5, current_y, static_cast<double>(bar_width), layout_info.bar_height);
   ctx->save();
   // Light blue
   ctx->set_source_rgb(0, 128, 255);
@@ -175,18 +227,18 @@ Cairo::RectangleInt StatisticsView::DrawStatEntryRect(
       static_cast<double>(duration_rect.get_x()) / Pango::SCALE +
           kBarPadding;
   ctx->move_to(text_x, current_y + kBarPadding);
-  duration_layout->show_in_cairo_context(ctx);
+  layout_info.duration_layout->show_in_cairo_context(ctx);
 
   text_x += static_cast<double>(duration_rect.get_width()) / Pango::SCALE;
   // Black
   ctx->set_source_rgb(0, 0, 0);
   ctx->move_to(text_x, current_y + kBarPadding);
-  task_name_layout->show_in_cairo_context(ctx);
+  layout_info.task_name_layout->show_in_cairo_context(ctx);
   Cairo::RectangleInt result;
   result.x = 0;
   result.y = static_cast<int>(current_y);
   result.width = control_width;
-  result.height = static_cast<int>(bar_height);
+  result.height = static_cast<int>(layout_info.bar_height);
   return result;
 }
 
@@ -204,7 +256,6 @@ void StatisticsView::Recalculate() noexcept {
       // Sort by duration, descending.
       return first.duration > second.duration;
   });
-  drawing_->queue_draw();
   for (const Activity::StatEntry& entry : displayed_stats_) {
     if (tasks_cache_.count(entry.task_id) == 0) {
       auto maybe_task = Task::LoadById(
@@ -215,6 +266,8 @@ void StatisticsView::Recalculate() noexcept {
       tasks_cache_.insert({entry.task_id, std::move(maybe_task.value())});
     }
   }
+  drawing_->set_size_request(-1, CalculageContentHeight());
+  drawing_->queue_draw();
 }
 
 void StatisticsView::OnExistingTaskChanged(const Task& task) noexcept {
