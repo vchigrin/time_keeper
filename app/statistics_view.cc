@@ -100,6 +100,9 @@ StatisticsView::StatisticsView(
   });
   drawing_->signal_draw().connect(
       sigc::mem_fun(*this, &StatisticsView::StatisticsDraw));
+  drawing_->add_events(Gdk::BUTTON_PRESS_MASK);
+  drawing_->signal_button_press_event().connect(
+      sigc::mem_fun(*this, &StatisticsView::OnDrawingButtonPressed));
   existing_task_changed_connection_ = app_state_->ConnectExistingTaskChanged(
       sigc::mem_fun(*this, &StatisticsView::OnExistingTaskChanged));
 }
@@ -141,14 +144,14 @@ bool StatisticsView::StatisticsDraw(
   SetFontForBarDrawing(pango_layout);
 
   Activity::Duration total_duration{};
-  for (const Activity::StatEntry& entry : displayed_stats_) {
-    total_duration += entry.duration;
+  for (const DisplayedStatInfo& entry : displayed_stats_) {
+    total_duration += entry.stat.duration;
   }
   const int control_width = drawing_->get_allocated_width();
   double current_y = 0.5;
   ctx->set_line_width(1);
-  for (const Activity::StatEntry& entry : displayed_stats_) {
-    const auto it_task = tasks_cache_.find(entry.task_id);
+  for (DisplayedStatInfo& entry : displayed_stats_) {
+    const auto it_task = tasks_cache_.find(entry.stat.task_id);
     VERIFY(it_task != tasks_cache_.end());
     const Cairo::RectangleInt stat_entry_rect = DrawStatEntryRect(
         ctx,
@@ -156,11 +159,31 @@ bool StatisticsView::StatisticsDraw(
         current_y,
         pango_layout,
         total_duration,
-        entry.duration,
+        entry.stat.duration,
         it_task->second);
+    entry.last_drawn_rect = stat_entry_rect;
     current_y += stat_entry_rect.height;
   }
   return true;  // Don't invoke any other "draw" event handlers.
+}
+
+bool StatisticsView::OnDrawingButtonPressed(GdkEventButton* evt) noexcept {
+  std::optional<Task> chosen_task;
+  for (const DisplayedStatInfo& entry : displayed_stats_) {
+    if (!entry.last_drawn_rect) {
+      continue;
+    }
+    // Intentionally don't check X to ease clicking on too narrow bars.
+    if (entry.last_drawn_rect->y <= evt->y &&
+        (entry.last_drawn_rect->y + entry.last_drawn_rect->height) > evt->y) {
+      const auto it_task = tasks_cache_.find(entry.stat.task_id);
+      VERIFY(it_task != tasks_cache_.end());
+      chosen_task = it_task->second;
+      break;
+    }
+  }
+  // TODO(vchigrin): Display separate window with detailed chosen task entries.
+  return false;  // Allow event propagation.
 }
 
 void StatisticsView::SetFontForBarDrawing(
@@ -179,13 +202,13 @@ int StatisticsView::CalculageContentHeight() noexcept {
       drawing_->get_pango_context());
   SetFontForBarDrawing(pango_layout);
   double result = 0;
-  for (const Activity::StatEntry& entry : displayed_stats_) {
-    const auto it_task = tasks_cache_.find(entry.task_id);
+  for (const DisplayedStatInfo& entry : displayed_stats_) {
+    const auto it_task = tasks_cache_.find(entry.stat.task_id);
     VERIFY(it_task != tasks_cache_.end());
     const BarLayoutInfo layout_info = MakeBarLayout(
         pango_layout,
         control_width,
-        entry.duration,
+        entry.stat.duration,
         it_task->second);
     result += layout_info.bar_height;
   }
@@ -248,22 +271,27 @@ void StatisticsView::Recalculate() noexcept {
       from_time_, to_time_);
   // TODO(vchigrin): Better error handling.
   VERIFY(maybe_stats);
-  displayed_stats_ = std::move(maybe_stats.value());
+  displayed_stats_.clear();
+  displayed_stats_.reserve(maybe_stats.value().size());
+  for (const Activity::StatEntry& stat : maybe_stats.value()) {
+    displayed_stats_.push_back({stat, std::nullopt});
+  }
   std::sort(
       displayed_stats_.begin(),
       displayed_stats_.end(),
-      [](const Activity::StatEntry& first, const Activity::StatEntry& second) {
+      [](const DisplayedStatInfo& first, const DisplayedStatInfo& second) {
       // Sort by duration, descending.
-      return first.duration > second.duration;
+      return first.stat.duration > second.stat.duration;
   });
-  for (const Activity::StatEntry& entry : displayed_stats_) {
-    if (tasks_cache_.count(entry.task_id) == 0) {
+  for (const DisplayedStatInfo& entry : displayed_stats_) {
+    if (tasks_cache_.count(entry.stat.task_id) == 0) {
       auto maybe_task = Task::LoadById(
           &app_state_->db_for_read_only(),
-          entry.task_id);
+          entry.stat.task_id);
       // TODO(vchigrin): Better error handling.
       VERIFY(maybe_task);
-      tasks_cache_.insert({entry.task_id, std::move(maybe_task.value())});
+      tasks_cache_.insert({
+        entry.stat.task_id, std::move(maybe_task.value())});
     }
   }
   drawing_->set_size_request(-1, CalculageContentHeight());

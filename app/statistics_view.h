@@ -24,13 +24,18 @@ class StatisticsView {
   void Recalculate() noexcept;
 
  private:
-  std::vector<Activity::StatEntry> displayed_stats_;
+  struct DisplayedStatInfo {
+    Activity::StatEntry stat;
+    std::optional<Cairo::RectangleInt> last_drawn_rect;
+  };
+  std::vector<DisplayedStatInfo> displayed_stats_;
   void InitializeWidgetPointers(
       const Glib::RefPtr<Gtk::Builder>& builder) noexcept;
 
   // Only date component is edited, time preserved.
   void EditDate(Activity::TimePoint* timepoint) noexcept;
   bool StatisticsDraw(const Cairo::RefPtr<Cairo::Context>& ctx) noexcept;
+  bool OnDrawingButtonPressed(GdkEventButton* evt) noexcept;
 
   void OnExistingTaskChanged(const Task& task) noexcept;
   Cairo::RectangleInt DrawStatEntryRect(
