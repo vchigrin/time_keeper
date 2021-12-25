@@ -42,9 +42,18 @@ class Activity {
   static outcome::std_result<std::vector<Activity>>
       LoadAll(Database* db) noexcept;
 
-  // Loads all tasks with start time >= earliest_start_time.
+  // Loads all activities with start time >= earliest_start_time.
   static outcome::std_result<std::vector<Activity>> LoadAfter(
       Database* db, const TimePoint& earliest_start_time) noexcept;
+  // Load activities filtering by time interval or by task id.
+  // Any of the optional arguments may be absent - in that case no filtering
+  // on this criteria performed.
+  // Not completed activities are not accounted.
+  static outcome::std_result<std::vector<Activity>> LoadFiltered(
+      Database* db,
+      const std::optional<Task::Id> task_id,
+      const std::optional<TimePoint> earliest_start_time,
+      const std::optional<TimePoint> latest_start_time) noexcept;
   static outcome::std_result<Activity> LoadById(Database* db, Id id) noexcept;
 
   // Returns statistics for specified interval.

@@ -47,6 +47,14 @@ class DbEntitiesTest : public ::testing::Test {
     VERIFY(db_);
     return &*db_;
   }
+  // Activity list:
+  // 1. Foo: start, start + 5min
+  // 2. Bar: start + 5 min, start + 13 min
+  // 3. Foo: start + 13 min, start + 20 min
+  // 4. Bar: start + 20 min, NULL (still running).
+  void CreateTestActivitiesRecords(
+      const Activity::TimePoint start_time,
+      const Task& foo, const Task& bar) noexcept;
 
  private:
   std::optional<Database> db_;
@@ -309,17 +317,9 @@ TEST_F(DbEntitiesTest, ActivityLoad) {
   }
 }
 
-TEST_F(DbEntitiesTest, ActivityStats) {
-  Task foo("foo");
-  Task bar("bar");
-
-  ASSERT_TRUE(foo.Save(db()));
-  ASSERT_TRUE(bar.Save(db()));
-
-  const Activity::TimePoint start_time =
-      std::chrono::floor<std::chrono::seconds>(
-          std::chrono::system_clock::now());
-
+void DbEntitiesTest::CreateTestActivitiesRecords(
+    const Activity::TimePoint start_time,
+    const Task& foo, const Task& bar) noexcept {
   // Activity list:
   // 1. Foo: start, start + 5min
   // 2. Bar: start + 5 min, start + 13 min
@@ -352,6 +352,20 @@ TEST_F(DbEntitiesTest, ActivityStats) {
     Activity a(bar, start_time + std::chrono::minutes(20));
     ASSERT_TRUE(a.Save(db()));
   }
+}
+
+TEST_F(DbEntitiesTest, ActivityStats) {
+  Task foo("foo");
+  Task bar("bar");
+  ASSERT_TRUE(foo.Save(db()));
+  ASSERT_TRUE(bar.Save(db()));
+
+  const Activity::TimePoint start_time =
+      std::chrono::floor<std::chrono::seconds>(
+          std::chrono::system_clock::now());
+
+  CreateTestActivitiesRecords(start_time, foo, bar);
+
   auto assert_results = [](
       const outcome::std_result<std::vector<Activity::StatEntry>>&
           result_outcome,
@@ -407,5 +421,129 @@ TEST_F(DbEntitiesTest, ActivityStats) {
     assert_results(maybe_result, {
       {*foo.id(), std::chrono::minutes(1)},
     });
+  }
+}
+
+struct ActivityInfo {
+  Task::Id task_id;
+  Activity::TimePoint start_time;
+  Activity::TimePoint end_time;
+};
+
+TEST_F(DbEntitiesTest, LoadFiltered) {
+  using std::chrono::minutes;
+
+  Task foo("foo");
+  Task bar("bar");
+  ASSERT_TRUE(foo.Save(db()));
+  ASSERT_TRUE(bar.Save(db()));
+
+  const Activity::TimePoint start_time =
+      std::chrono::floor<std::chrono::seconds>(
+          std::chrono::system_clock::now());
+
+  CreateTestActivitiesRecords(start_time, foo, bar);
+
+  auto assert_results = [](
+      const outcome::std_result<std::vector<Activity>>& result_outcome,
+      std::vector<ActivityInfo> expected_results) {
+    ASSERT_TRUE(result_outcome);
+    std::vector<Activity> results = result_outcome.value();
+    ASSERT_EQ(expected_results.size(), results.size());
+    // Inefficient, but simple search argument.
+    while (!expected_results.empty()) {
+      const ActivityInfo expected = expected_results.back();
+      expected_results.pop_back();
+      auto it = std::find_if(
+          results.begin(),
+          results.end(),
+          [expected](const Activity& a) {
+            return a.task_id() == expected.task_id &&
+                a.start_time() == expected.start_time &&
+                a.end_time() == expected.end_time;
+          });
+      ASSERT_TRUE(it != results.end());
+      results.erase(it);
+    }
+  };
+
+  {
+    auto maybe_result = Activity::LoadFiltered(
+        db(),
+        std::nullopt,
+        std::nullopt,
+        std::nullopt);
+    ASSERT_TRUE(maybe_result);
+    const std::vector<Activity>& result = maybe_result.value();
+
+    assert_results(
+        result,
+        {
+          {*foo.id(), start_time, start_time + minutes(5)},
+          {*bar.id(), start_time + minutes(5), start_time + minutes(13)},
+          {*foo.id(), start_time + minutes(13), start_time + minutes(20)},
+        });
+  }
+
+  {
+    auto maybe_result = Activity::LoadFiltered(
+        db(),
+        foo.id(),
+        std::nullopt,
+        std::nullopt);
+    ASSERT_TRUE(maybe_result);
+    const std::vector<Activity>& result = maybe_result.value();
+
+    assert_results(
+        result,
+        {
+          {*foo.id(), start_time, start_time + minutes(5)},
+          {*foo.id(), start_time + minutes(13), start_time + minutes(20)},
+        });
+  }
+
+  {
+    auto maybe_result = Activity::LoadFiltered(
+        db(),
+        std::nullopt,
+        start_time + minutes(2),
+        std::nullopt);
+    ASSERT_TRUE(maybe_result);
+    const std::vector<Activity>& result = maybe_result.value();
+
+    assert_results(
+        result,
+        {
+          {*bar.id(), start_time + minutes(5), start_time + minutes(13)},
+          {*foo.id(), start_time + minutes(13), start_time + minutes(20)},
+        });
+  }
+
+  {
+    auto maybe_result = Activity::LoadFiltered(
+        db(),
+        std::nullopt,
+        start_time + minutes(2),
+        start_time + minutes(10));
+    ASSERT_TRUE(maybe_result);
+    const std::vector<Activity>& result = maybe_result.value();
+
+    assert_results(
+        result,
+        {
+          {*bar.id(), start_time + minutes(5), start_time + minutes(13)},
+        });
+  }
+
+  {
+    auto maybe_result = Activity::LoadFiltered(
+        db(),
+        foo.id(),
+        start_time + minutes(2),
+        start_time + minutes(10));
+    ASSERT_TRUE(maybe_result);
+    const std::vector<Activity>& result = maybe_result.value();
+
+    assert_results(result, {});
   }
 }

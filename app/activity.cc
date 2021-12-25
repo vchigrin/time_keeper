@@ -4,6 +4,8 @@
 
 #include "app/activity.h"
 
+#include <boost/algorithm/string.hpp>
+
 #include "app/database.h"
 
 namespace m_time_tracker {
@@ -38,8 +40,35 @@ outcome::std_result<std::vector<Activity>> Activity::LoadAll(
 outcome::std_result<std::vector<Activity>> Activity::LoadAfter(
     Database* db, const TimePoint& earliest_start_time) noexcept {
   const std::string query = std::string(kBaseSelectQuery) +
-      " wheRE start_time >= " +
+      " WHERE start_time >= " +
           std::to_string(IntFromTimePoint(earliest_start_time));
+  return LoadWithQuery(db, query);
+}
+
+// static
+outcome::std_result<std::vector<Activity>> Activity::LoadFiltered(
+    Database* db,
+    const std::optional<Task::Id> task_id,
+    const std::optional<TimePoint> earliest_start_time,
+    const std::optional<TimePoint> latest_start_time) noexcept {
+  std::vector<std::string> conditions;
+  if (task_id) {
+    conditions.push_back("task_id = " + std::to_string(*task_id));
+  }
+  if (earliest_start_time) {
+    conditions.push_back("start_time >= " +
+        std::to_string(IntFromTimePoint(*earliest_start_time)));
+  }
+  if (latest_start_time) {
+    conditions.push_back("start_time <= " +
+        std::to_string(IntFromTimePoint(*latest_start_time)));
+  }
+  std::string query = std::string(kBaseSelectQuery) +
+      " WHERE end_time IS NOT NULL ";
+  if (!conditions.empty()) {
+    query += " AND " + boost::algorithm::join(conditions, " AND ");
+  }
+
   return LoadWithQuery(db, query);
 }
 

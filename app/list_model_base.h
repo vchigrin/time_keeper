@@ -53,7 +53,7 @@ class ListModelBase: public Gio::ListStore<Gtk::Widget> {
   virtual Glib::RefPtr<Gtk::Widget> CreateRowFromObject(
       const ObjectType& o) noexcept = 0;
 
-  void Initialize(const std::vector<ObjectType>& objects) noexcept;
+  void SetContent(const std::vector<ObjectType>& objects) noexcept;
 
   void ExistingObjectChanged(const ObjectType& t) noexcept;
   void AfterObjectAdded(const ObjectType& t) noexcept;
@@ -108,9 +108,9 @@ Glib::RefPtr<Gtk::Widget> ListModelBase<ObjectType>::DoCreateRowFromObject(
 }
 
 template<typename ObjectType>
-void ListModelBase<ObjectType>::Initialize(
+void ListModelBase<ObjectType>::SetContent(
     const std::vector<ObjectType>& objects) noexcept {
-  VERIFY(object_id_to_item_index_.empty());
+  object_id_to_item_index_.clear();
   std::vector<Glib::RefPtr<Gtk::Widget>> items;
   items.reserve(objects.size());
   for (const ObjectType& t : objects) {
@@ -121,7 +121,8 @@ void ListModelBase<ObjectType>::Initialize(
     VERIFY(object_id_to_item_index_.insert(
         {*t.id(), items.size() - 1}).second);
   }
-  splice(0U, 0U, items);
+  const guint old_size = get_n_items();
+  splice(0U, /* n_removals */ old_size, items);
 }
 
 template<typename ObjectType>

@@ -31,7 +31,7 @@ class EditTaskListModel : public TaskListModelBase {
         main_window_(main_window) {
     auto maybe_all_tasks = Task::LoadAll(&app_state->db_for_read_only());
     VERIFY(maybe_all_tasks);
-    Initialize(maybe_all_tasks.value());
+    SetContent(maybe_all_tasks.value());
     VERIFY(main_window_);
     running_task_changed_connection_ = app_state_->ConnectRunningTaskChanged(
         sigc::mem_fun(*this, &EditTaskListModel::OnRunningTaskChanged));
@@ -70,7 +70,7 @@ class TaskListModel : public TaskListModelBase {
     auto maybe_tasks = Task::LoadNotArchived(
         &app_state->db_for_read_only());
     VERIFY(maybe_tasks);
-    Initialize(maybe_tasks.value());
+    SetContent(maybe_tasks.value());
   }
 
   Glib::RefPtr<Gtk::Widget> CreateRowFromObject(

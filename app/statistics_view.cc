@@ -11,6 +11,7 @@
 #include <utility>
 
 #include "app/edit_date_dialog.h"
+#include "app/filtered_activities_dialog.h"
 #include "app/ui_helpers.h"
 #include "app/utils.h"
 
@@ -182,7 +183,23 @@ bool StatisticsView::OnDrawingButtonPressed(GdkEventButton* evt) noexcept {
       break;
     }
   }
-  // TODO(vchigrin): Display separate window with detailed chosen task entries.
+  if (chosen_task) {
+    auto activities_list = Activity::LoadFiltered(
+        &app_state_->db_for_read_only(),
+        chosen_task->id(),
+        from_time_,
+        to_time_);
+    // TODO(vchigrin): Better error handling.
+    VERIFY(activities_list);
+    Glib::RefPtr<FilteredActivitiesDialog> dlg =
+        GetWindowDerived<FilteredActivitiesDialog>(
+            resource_builder_, "filtered_activities_dialog", app_state_);
+    dlg->SetActivitiesList(activities_list.value());
+    dlg->run();
+    dlg->hide();
+    // User may have edited some of the activities.
+    Recalculate();
+  }
   return false;  // Allow event propagation.
 }
 
