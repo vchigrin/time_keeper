@@ -62,9 +62,17 @@ class Task {
     return id_;
   }
 
+  std::optional<Id> parent_task_id() const noexcept {
+    return parent_task_id_;
+  }
+
+  void set_parent_task_id(std::optional<Task::Id> id) noexcept {
+    parent_task_id_ = id;
+  }
+
   void SetParentTask(const Task& parent) noexcept {
     VERIFY(parent.id_);  // Parent task must be saved.
-    parent_task_id_ = parent.id_;
+    set_parent_task_id(parent.id_);
   }
 
  private:

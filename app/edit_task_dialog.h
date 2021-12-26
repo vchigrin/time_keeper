@@ -12,9 +12,14 @@
 
 namespace m_time_tracker {
 
+class AppState;
+
 class EditTaskDialog : public Gtk::Dialog {
  public:
-  EditTaskDialog(GtkDialog* dlg, const Glib::RefPtr<Gtk::Builder>& builder);
+  EditTaskDialog(
+      GtkDialog* dlg,
+      const Glib::RefPtr<Gtk::Builder>& builder,
+      AppState* app_state);
 
   void set_task(Task* task) noexcept {
     task_ = task;
@@ -27,10 +32,13 @@ class EditTaskDialog : public Gtk::Dialog {
  private:
   void OnTaskNameChange() noexcept;
   std::string GetTrimmedEditText() noexcept;
+  void InitializeParentTaskCombo() noexcept;
 
   Gtk::Entry* edt_task_name_ = nullptr;
   Gtk::Button* btn_ok_ = nullptr;
   Gtk::CheckButton* chk_archived_ = nullptr;
+  Gtk::ComboBoxText* cmb_parent_task_ = nullptr;
+  AppState* app_state_ = nullptr;
   Task* task_ = nullptr;
 };
 

@@ -234,7 +234,8 @@ void MainWindow::OnBtnNewTaskClicked() noexcept {
 
 void MainWindow::EditTask(Task* task) noexcept {
   Glib::RefPtr<EditTaskDialog> edit_task_dialog =
-      GetWindowDerived<EditTaskDialog>(resource_builder_, "edit_task_dialog");
+      GetWindowDerived<EditTaskDialog>(
+          resource_builder_, "edit_task_dialog", app_state_);
   edit_task_dialog->set_task(task);
   while (true) {
     if (edit_task_dialog->run() != Gtk::RESPONSE_OK) {
