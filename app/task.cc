@@ -140,6 +140,17 @@ outcome::std_result<std::vector<Task>> Task::LoadWithQuery(
 
 // static
 outcome::std_result<void> Task::Save(Database* db) noexcept {
+  if (parent_task_id_ && !is_archived_) {
+    // Check, if parent is archived, this task also must be archived.
+    const outcome::std_result<Task> maybe_parent = LoadById(
+        db, *parent_task_id_);
+    if (!maybe_parent) {
+      return maybe_parent.error();
+    }
+    if (maybe_parent.value().is_archived_) {
+      is_archived_ = true;
+    }
+  }
   if (id_) {
     const std::unordered_map<std::string, Database::Param> params = {
       {":name", Database::Param(name_)},

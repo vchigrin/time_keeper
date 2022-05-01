@@ -56,34 +56,50 @@ void EditTaskDialog::on_response(int response_id) {
 
 void EditTaskDialog::on_show() {
   Gtk::Dialog::on_show();
-  InitializeParentTaskCombo();
+  const std::vector<Task> child_tasks = LoadChildTasks();
+  InitializeParentTaskCombo(child_tasks);
   if (task_) {
     edt_task_name_->set_text(task_->name());
     chk_archived_->set_active(task_->is_archived());
+    const bool has_not_arcived_childern = (child_tasks.end() != std::find_if(
+        child_tasks.begin(),
+        child_tasks.end(),
+        [](const Task& t) { return !t.is_archived(); }));
+    if (has_not_arcived_childern) {
+      chk_archived_->set_sensitive(false);
+    } else {
+      chk_archived_->set_sensitive(true);
+    }
   }
   OnTaskNameChange();
   edt_task_name_->grab_focus();
 }
 
-void EditTaskDialog::InitializeParentTaskCombo() noexcept {
-  cmb_parent_task_->remove_all();
-  // TODO(vchigrin): Localization
-  cmb_parent_task_->append("<NONE>", kNoneTaskId);
+std::vector<Task> EditTaskDialog::LoadChildTasks() noexcept {
   if (task_ && task_->id()) {
     auto maybe_child_tasks = Task::LoadChildTasks(
         &app_state_->db_for_read_only(),
         *task_);
     // TODO(vchigrin): Better error handling.
     VERIFY(maybe_child_tasks);
-    const std::vector<Task>& child_tasks = maybe_child_tasks.value();
-    if (!child_tasks.empty()) {
-      // At present we support only one level in tasks hierarchy. Primly
-      // due to difficulties in select task UI.
-      const bool task_found = cmb_parent_task_->set_active_id(kNoneTaskId);
-      VERIFY(task_found);
-      cmb_parent_task_->set_sensitive(false);
-      return;
-    }
+    return maybe_child_tasks.value();
+  } else {
+    return std::vector<Task>();
+  }
+}
+
+void EditTaskDialog::InitializeParentTaskCombo(
+    const std::vector<Task>& child_tasks) noexcept {
+  cmb_parent_task_->remove_all();
+  // TODO(vchigrin): Localization
+  cmb_parent_task_->append("<NONE>", kNoneTaskId);
+  if (!child_tasks.empty()) {
+    // At present we support only one level in tasks hierarchy. Primly
+    // due to difficulties in select task UI.
+    const bool task_found = cmb_parent_task_->set_active_id(kNoneTaskId);
+    VERIFY(task_found);
+    cmb_parent_task_->set_sensitive(false);
+    return;
   }
   cmb_parent_task_->set_sensitive(true);
   auto maybe_tasks = Task::LoadTopLevel(&app_state_->db_for_read_only());

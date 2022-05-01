@@ -39,7 +39,7 @@ class ListModelBase: public Gio::ListStore<Gtk::Widget> {
     return Glib::RefPtr<ChildClass>(result);
   }
 
-  std::optional<typename ObjectType::Id> GetObjectIdForRow(
+  static std::optional<typename ObjectType::Id> GetObjectIdForRow(
       Gtk::ListBoxRow* row) noexcept;
 
  protected:

@@ -23,26 +23,26 @@ namespace m_time_tracker {
 namespace {
 
 class EditTaskListModel : public TaskListModelBase {
- protected:
-  friend class ListModelBase<Task>;
+ public:
   EditTaskListModel(AppState* app_state, MainWindow* main_window) noexcept
-      : TaskListModelBase(app_state),
+      : TaskListModelBase(app_state, true),
         app_state_(app_state),
         main_window_(main_window) {
-    auto maybe_all_tasks = Task::LoadAll(&app_state->db_for_read_only());
-    VERIFY(maybe_all_tasks);
-    SetContent(maybe_all_tasks.value());
     VERIFY(main_window_);
     running_task_changed_connection_ = app_state_->ConnectRunningTaskChanged(
         sigc::mem_fun(*this, &EditTaskListModel::OnRunningTaskChanged));
+    InitContent();
   }
 
   ~EditTaskListModel() {
     running_task_changed_connection_.disconnect();
   }
 
-  Glib::RefPtr<Gtk::Widget> CreateRowFromObject(
-      const Task& t) noexcept override;
+ protected:
+  void CustomizeRow(
+      const Glib::RefPtr<Gtk::ListBoxRow>, const Task&) noexcept override;
+  void ReCustomizeRow(
+      const Glib::RefPtr<Gtk::ListBoxRow>, const Task&) noexcept override;
 
  private:
   void EditTask(Task::Id task_id) {
@@ -63,30 +63,16 @@ class EditTaskListModel : public TaskListModelBase {
 };
 
 class TaskListModel : public TaskListModelBase {
- protected:
-  friend class ListModelBase<Task>;
+ public:
   explicit TaskListModel(AppState* app_state) noexcept
-      : TaskListModelBase(app_state) {
-    auto maybe_tasks = Task::LoadNotArchived(
-        &app_state->db_for_read_only());
-    VERIFY(maybe_tasks);
-    SetContent(maybe_tasks.value());
+      : TaskListModelBase(app_state, false) {
+    InitContent();
   }
-
-  Glib::RefPtr<Gtk::Widget> CreateRowFromObject(
-      const Task& t) noexcept override;
 };
 
-Glib::RefPtr<Gtk::Widget> EditTaskListModel::CreateRowFromObject(
-    const Task& t) noexcept {
-  GtkListBoxRow* row = reinterpret_cast<GtkListBoxRow*>(hdy_action_row_new());
-  g_object_ref_sink(row);
-  Glib::RefPtr<Gtk::ListBoxRow> wrapped_row(Glib::wrap(row));
 
-  const std::string& title = t.name();
-  hdy_preferences_row_set_title(
-      reinterpret_cast<HdyPreferencesRow*>(wrapped_row->gobj()),
-      title.c_str());
+void EditTaskListModel::CustomizeRow(
+    const Glib::RefPtr<Gtk::ListBoxRow> wrapped_row, const Task& t) noexcept {
   Glib::RefPtr<Gtk::Button> btn_edit(new Gtk::Button());
   btn_edit->set_image_from_icon_name("gtk-edit");
   btn_edit->show();
@@ -94,13 +80,18 @@ Glib::RefPtr<Gtk::Widget> EditTaskListModel::CreateRowFromObject(
   btn_edit->signal_clicked().connect([this, task_id = *t.id()]() {
     EditTask(task_id);
   });
-  wrapped_row->add(*btn_edit.get());
-
-  if (t.is_archived()) {
-    Glib::RefPtr<Gtk::StyleContext> style_context =
-        wrapped_row->get_style_context();
-    style_context->add_class("archived");
+  if (HDY_IS_ACTION_ROW(wrapped_row->gobj())) {
+    hdy_action_row_add_prefix(
+        reinterpret_cast<HdyActionRow*>(wrapped_row->gobj()),
+        reinterpret_cast<GtkWidget*>(btn_edit->gobj()));
+  } else if (HDY_IS_EXPANDER_ROW(wrapped_row->gobj())) {
+    hdy_expander_row_add_prefix(
+        reinterpret_cast<HdyExpanderRow*>(wrapped_row->gobj()),
+        reinterpret_cast<GtkWidget*>(btn_edit->gobj()));
+  } else {
+    VERIFY(false);
   }
+
   task_id_to_btn_edit_[*t.id()] = btn_edit;
 
   const auto maybe_running_task = app_state_->running_task();
@@ -108,9 +99,18 @@ Glib::RefPtr<Gtk::Widget> EditTaskListModel::CreateRowFromObject(
       maybe_running_task->id() == t.id()) {
     btn_edit->set_sensitive(false);
   }
+  ReCustomizeRow(wrapped_row, t);
+}
 
-  wrapped_row->show();
-  return wrapped_row;
+void EditTaskListModel::ReCustomizeRow(
+    const Glib::RefPtr<Gtk::ListBoxRow> wrapped_row, const Task& t) noexcept {
+  Glib::RefPtr<Gtk::StyleContext> style_context =
+      wrapped_row->get_style_context();
+  if (t.is_archived()) {
+    style_context->add_class("archived");
+  } else {
+    style_context->remove_class("archived");
+  }
 }
 
 void EditTaskListModel::OnRunningTaskChanged(
@@ -122,24 +122,6 @@ void EditTaskListModel::OnRunningTaskChanged(
       btn_edit->set_sensitive(true);
     }
   }
-}
-
-Glib::RefPtr<Gtk::Widget> TaskListModel::CreateRowFromObject(
-    const Task& t) noexcept {
-  if (t.is_archived()) {
-    // May be if task was changed.
-    return Glib::RefPtr<Gtk::Widget>();
-  }
-  GtkListBoxRow* row = reinterpret_cast<GtkListBoxRow*>(hdy_action_row_new());
-  g_object_ref_sink(row);
-  Glib::RefPtr<Gtk::ListBoxRow> wrapped_row(Glib::wrap(row));
-
-  const std::string& title = t.name();
-  hdy_preferences_row_set_title(
-      reinterpret_cast<HdyPreferencesRow*>(wrapped_row->gobj()),
-      title.c_str());
-  wrapped_row->show();
-  return wrapped_row;
 }
 
 }  // namespace
@@ -161,17 +143,13 @@ MainWindow::MainWindow(
       sigc::mem_fun(*this, &MainWindow::OnBtnMenuClicked));
   btn_new_task_->signal_clicked().connect(
       sigc::mem_fun(*this, &MainWindow::OnBtnNewTaskClicked));
-  Glib::RefPtr<EditTaskListModel> edit_tasks_model =
-      TaskListModelBase::create<EditTaskListModel>(app_state_, this);
-  lst_edit_tasks_->bind_model(
-      edit_tasks_model,
-      edit_tasks_model->slot_create_widget());
-  task_list_model_ = TaskListModelBase::create<TaskListModel>(app_state_);
-  lst_tasks_->bind_model(
-      task_list_model_,
-      task_list_model_->slot_create_widget());
-  lst_tasks_->signal_row_selected().connect(
-      sigc::mem_fun(*this, &MainWindow::OnLstTasksRowSelected));
+  Glib::RefPtr<EditTaskListModel> edit_tasks_model(
+      EditTaskListModel::create<EditTaskListModel>(app_state_, this));
+  edit_tasks_model->BindTo(lst_edit_tasks_);
+  task_list_model_ = TaskListModel::create<TaskListModel>(app_state_);
+  task_list_model_->BindTo(lst_tasks_);
+  task_list_model_->ConnectSelectedTaskIdChanged(
+      sigc::mem_fun(*this, &MainWindow::OnLstTasksSelectionChanged));
   page_stack_sidebar_->signal_button_release_event().connect(
       sigc::mem_fun(*this, &MainWindow::OnStackSidebarButtonReleased));
   Glib::RefPtr<RecentActivitiesModel> activities_model =
@@ -300,10 +278,8 @@ void MainWindow::OnBtnStartStopClicked() noexcept {
         sigc::mem_fun(*this, &MainWindow::OnTaskTimer), 1);
     Gtk::ListBoxRow* selected_row = lst_tasks_->get_selected_row();
     VERIFY(selected_row);  // Button should be disabled if selection is abent.
-    const auto task_id = task_list_model_->GetObjectIdForRow(selected_row);
-    VERIFY(task_id);
-    auto maybe_task = Task::LoadById(
-        &app_state_->db_for_read_only(), *task_id);
+    const Task::Id task_id = task_list_model_->GetTaskIdForRow(selected_row);
+    auto maybe_task = Task::LoadById(&app_state_->db_for_read_only(), task_id);
     VERIFY(maybe_task);
     app_state_->StartRunningTask(maybe_task.value());
   }
@@ -316,31 +292,24 @@ void MainWindow::OnBtnMakeRecordClicked() noexcept {
   VERIFY(save_result);
 }
 
-void MainWindow::OnLstTasksRowSelected(
-    Gtk::ListBoxRow* selected_row) noexcept {
-  std::optional<Task> task = std::nullopt;
-  if (selected_row) {
-    const std::optional<Task::Id> task_id =
-        task_list_model_->GetObjectIdForRow(selected_row);
-    VERIFY(task_id);
-    auto maybe_task = Task::LoadById(
-        &app_state_->db_for_read_only(), *task_id);
-    VERIFY(maybe_task);
-    task = std::move(maybe_task.value());
-  } else {
-    // Active task archiving or changing must be disallowed by UI.
-    VERIFY(!IsTaskRunning());
-  }
+void MainWindow::OnLstTasksSelectionChanged(
+    const std::optional<Task::Id>& selected_task_id) noexcept {
   if (IsTaskRunning()) {
-    VERIFY(task);
-    app_state_->ChangeRunningTask(std::move(*task));
+    // Active task archiving or changing must be disallowed by UI.
+    VERIFY(selected_task_id);
+    auto maybe_task = Task::LoadById(
+        &app_state_->db_for_read_only(),
+        *selected_task_id);
+    VERIFY(maybe_task);
+    app_state_->ChangeRunningTask(std::move(maybe_task.value()));
   }
   UpdateBtnStartStop();
 }
 
 void MainWindow::UpdateBtnStartStop() noexcept {
-  const Gtk::ListBoxRow* selected_row = lst_tasks_->get_selected_row();
-  if (selected_row) {
+  const std::optional<Task::Id> selected_task_id =
+      task_list_model_->selected_task_id();
+  if (selected_task_id) {
     btn_start_stop_->set_sensitive(true);
   } else {
     btn_start_stop_->set_sensitive(false);

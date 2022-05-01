@@ -6,6 +6,7 @@
 
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "app/ui_helpers.h"
 #include "app/task.h"
@@ -32,7 +33,9 @@ class EditTaskDialog : public Gtk::Dialog {
  private:
   void OnTaskNameChange() noexcept;
   std::string GetTrimmedEditText() noexcept;
-  void InitializeParentTaskCombo() noexcept;
+  std::vector<Task> LoadChildTasks() noexcept;
+  void InitializeParentTaskCombo(
+      const std::vector<Task>& child_tasks) noexcept;
 
   Gtk::Entry* edt_task_name_ = nullptr;
   Gtk::Button* btn_ok_ = nullptr;

@@ -40,7 +40,8 @@ class MainWindow : public Gtk::Window {
 
   void OnBtnStartStopClicked() noexcept;
   void OnBtnMakeRecordClicked() noexcept;
-  void OnLstTasksRowSelected(Gtk::ListBoxRow* selected_row) noexcept;
+  void OnLstTasksSelectionChanged(
+      const std::optional<Task::Id>& selected_task_id) noexcept;
   void OnRunningTaskChanged(const std::optional<Task>&) noexcept;
   void UpdateBtnStartStop() noexcept;
   bool OnTaskTimer() noexcept;
