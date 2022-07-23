@@ -193,23 +193,61 @@ outcome::std_result<std::vector<Activity::StatEntry>>
     Activity::LoadStatsForInterval(
         Database* db,
         const TimePoint& interval_start,
-        const TimePoint& interval_end) noexcept {
+        const TimePoint& interval_end,
+        Task::Id parent_task_id) noexcept {
   if (interval_start >= interval_end) {
     return std::vector<StatEntry>{};
   }
   static constexpr std::string_view kQuery = (
       "SELECT task_id, "
       " SUM(MIN(end_time, :interval_end) - MAX(start_time, :interval_start)) "
-      " FROM Activities "
-      " WHERE (end_time >= :interval_start AND end_time < :interval_end) OR "
+      " FROM Activities, Tasks "
+      " WHERE "
+      " Activities.task_id = Tasks.id AND "
+      " Tasks.parent_task_id = :parent_task_id AND "
+      "((end_time >= :interval_start AND end_time < :interval_end) OR "
       "  (start_time >= :interval_start AND start_time < :interval_end) OR "
-      "  (start_time < :interval_start AND end_time > :interval_end) "
+      "  (start_time < :interval_start AND end_time > :interval_end)) "
       " GROUP BY task_id");
   const std::unordered_map<std::string, Database::Param> params = {
       {":interval_start", Database::Param(IntFromTimePoint(interval_start))},
       {":interval_end", Database::Param(IntFromTimePoint(interval_end))},
+      {":parent_task_id", Database::Param(parent_task_id)},
   };
-  auto maybe_rows = db->Select(kQuery, params);
+  return StatsFromSelectResults(db->Select(kQuery, params));
+}
+
+outcome::std_result<std::vector<Activity::StatEntry>>
+    Activity::LoadStatsForTopLevelTasksInInterval(
+        Database* db,
+        const TimePoint& interval_start,
+        const TimePoint& interval_end) noexcept {
+  if (interval_start >= interval_end) {
+    return std::vector<StatEntry>{};
+  }
+  static constexpr std::string_view kQuery = (
+      "SELECT "
+      " (CASE WHEN parent_task_id is not NULL THEN "
+      "    parent_task_id ELSE Tasks.id END) AS group_id,"
+      " SUM(MIN(end_time, :interval_end) - MAX(start_time, :interval_start)) "
+      " FROM Activities, Tasks "
+      " WHERE "
+      " Activities.task_id = Tasks.id AND "
+      "((end_time >= :interval_start AND end_time < :interval_end) OR "
+      "  (start_time >= :interval_start AND start_time < :interval_end) OR "
+      "  (start_time < :interval_start AND end_time > :interval_end)) "
+      " GROUP BY group_id");
+  const std::unordered_map<std::string, Database::Param> params = {
+      {":interval_start", Database::Param(IntFromTimePoint(interval_start))},
+      {":interval_end", Database::Param(IntFromTimePoint(interval_end))},
+  };
+  return StatsFromSelectResults(db->Select(kQuery, params));
+}
+
+// static
+outcome::std_result<std::vector<Activity::StatEntry>>
+    Activity::StatsFromSelectResults(
+        outcome::std_result<SelectRows> maybe_rows) noexcept {
   if (!maybe_rows) {
     return maybe_rows.error();
   }

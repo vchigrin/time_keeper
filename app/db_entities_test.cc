@@ -56,6 +56,20 @@ class DbEntitiesTest : public ::testing::Test {
       const Activity::TimePoint start_time,
       const Task& foo, const Task& bar) noexcept;
 
+  void VerifyActivityStats(
+      const outcome::std_result<std::vector<Activity::StatEntry>>&
+          result_outcome,
+      const std::unordered_map<Task::Id, Activity::Duration>& expected) {
+    ASSERT_TRUE(result_outcome);
+    const std::vector<Activity::StatEntry>& result = result_outcome.value();
+    ASSERT_EQ(result.size(), expected.size());
+    for (const auto& entry : result) {
+      auto it_expected = expected.find(entry.task_id);
+      ASSERT_TRUE(it_expected != expected.end());
+      ASSERT_EQ(entry.duration, it_expected->second);
+    }
+  }
+
  private:
   std::optional<Database> db_;
 };
@@ -354,9 +368,14 @@ void DbEntitiesTest::CreateTestActivitiesRecords(
   }
 }
 
-TEST_F(DbEntitiesTest, ActivityStats) {
+TEST_F(DbEntitiesTest, ActivityStatsForIntervalBothChildrenIncluded) {
+  Task parent("parent");
+  ASSERT_TRUE(parent.Save(db()));
+  ASSERT_TRUE(parent.id());
   Task foo("foo");
+  foo.set_parent_task_id(parent.id());
   Task bar("bar");
+  bar.set_parent_task_id(parent.id());
   ASSERT_TRUE(foo.Save(db()));
   ASSERT_TRUE(bar.Save(db()));
 
@@ -366,26 +385,13 @@ TEST_F(DbEntitiesTest, ActivityStats) {
 
   CreateTestActivitiesRecords(start_time, foo, bar);
 
-  auto assert_results = [](
-      const outcome::std_result<std::vector<Activity::StatEntry>>&
-          result_outcome,
-      const std::unordered_map<Task::Id, Activity::Duration>& expected) {
-    ASSERT_TRUE(result_outcome);
-    const std::vector<Activity::StatEntry>& result = result_outcome.value();
-    ASSERT_EQ(result.size(), expected.size());
-    for (const auto& entry : result) {
-      auto it_expected = expected.find(entry.task_id);
-      ASSERT_TRUE(it_expected != expected.end());
-      ASSERT_EQ(entry.duration, it_expected->second);
-    }
-  };
-
   { // Interval covers all entries.
     auto maybe_result = Activity::LoadStatsForInterval(
         db(),
         start_time,
-        start_time + std::chrono::minutes(20));
-    assert_results(maybe_result, {
+        start_time + std::chrono::minutes(20),
+        *parent.id());
+    VerifyActivityStats(maybe_result, {
       {*foo.id(), std::chrono::minutes(12)},
       {*bar.id(), std::chrono::minutes(8)},
     });
@@ -395,8 +401,9 @@ TEST_F(DbEntitiesTest, ActivityStats) {
     auto maybe_result = Activity::LoadStatsForInterval(
         db(),
         start_time - std::chrono::minutes(1),
-        start_time + std::chrono::minutes(3));
-    assert_results(maybe_result, {
+        start_time + std::chrono::minutes(3),
+        *parent.id());
+    VerifyActivityStats(maybe_result, {
       {*foo.id(), std::chrono::minutes(3)},
     });
   }
@@ -406,8 +413,9 @@ TEST_F(DbEntitiesTest, ActivityStats) {
     auto maybe_result = Activity::LoadStatsForInterval(
         db(),
         start_time + std::chrono::minutes(3),
-        start_time + std::chrono::minutes(9));
-    assert_results(maybe_result, {
+        start_time + std::chrono::minutes(9),
+        *parent.id());
+    VerifyActivityStats(maybe_result, {
       {*foo.id(), std::chrono::minutes(2)},
       {*bar.id(), std::chrono::minutes(4)},
     });
@@ -417,9 +425,134 @@ TEST_F(DbEntitiesTest, ActivityStats) {
     auto maybe_result = Activity::LoadStatsForInterval(
         db(),
         start_time + std::chrono::minutes(1),
-        start_time + std::chrono::minutes(2));
-    assert_results(maybe_result, {
+        start_time + std::chrono::minutes(2),
+        *parent.id());
+    VerifyActivityStats(maybe_result, {
       {*foo.id(), std::chrono::minutes(1)},
+    });
+  }
+}
+
+TEST_F(DbEntitiesTest, ActivityStatsForIntervalOneChildIncluded) {
+  Task parent("parent");
+  ASSERT_TRUE(parent.Save(db()));
+  ASSERT_TRUE(parent.id());
+  Task foo("foo");
+  foo.set_parent_task_id(parent.id());
+  Task bar("bar");
+  // "Bar" is not a child of "parent".
+  ASSERT_TRUE(foo.Save(db()));
+  ASSERT_TRUE(bar.Save(db()));
+
+  const Activity::TimePoint start_time =
+      std::chrono::floor<std::chrono::seconds>(
+          std::chrono::system_clock::now());
+
+  CreateTestActivitiesRecords(start_time, foo, bar);
+
+  { // Interval covers all entries (bar - excluded by parent).
+    auto maybe_result = Activity::LoadStatsForInterval(
+        db(),
+        start_time,
+        start_time + std::chrono::minutes(20),
+        *parent.id());
+    VerifyActivityStats(maybe_result, {
+      {*foo.id(), std::chrono::minutes(12)},
+    });
+  }
+  {
+    // Interval partially intersects first entry at start.
+    auto maybe_result = Activity::LoadStatsForInterval(
+        db(),
+        start_time - std::chrono::minutes(1),
+        start_time + std::chrono::minutes(3),
+        *parent.id());
+    VerifyActivityStats(maybe_result, {
+      {*foo.id(), std::chrono::minutes(3)},
+    });
+  }
+  {
+    // Interval partially intersects first entry at end and
+    // second entry at start.
+    auto maybe_result = Activity::LoadStatsForInterval(
+        db(),
+        start_time + std::chrono::minutes(3),
+        start_time + std::chrono::minutes(9),
+        *parent.id());
+    VerifyActivityStats(maybe_result, {
+      {*foo.id(), std::chrono::minutes(2)},
+    });
+  }
+  {
+    // First entry fully covers interval.
+    auto maybe_result = Activity::LoadStatsForInterval(
+        db(),
+        start_time + std::chrono::minutes(1),
+        start_time + std::chrono::minutes(2),
+        *parent.id());
+    VerifyActivityStats(maybe_result, {
+      {*foo.id(), std::chrono::minutes(1)},
+    });
+  }
+}
+
+TEST_F(DbEntitiesTest, ActivityStatsForTopLevelTasksInInterval) {
+  Task parent_foo("parent_foo");
+  ASSERT_TRUE(parent_foo.Save(db()));
+  ASSERT_TRUE(parent_foo.id());
+  Task foo("foo");
+  foo.set_parent_task_id(parent_foo.id());
+  Task bar("bar");
+  // "Bar" is top-level task for itself.
+  ASSERT_TRUE(foo.Save(db()));
+  ASSERT_TRUE(bar.Save(db()));
+
+  const Activity::TimePoint start_time =
+      std::chrono::floor<std::chrono::seconds>(
+          std::chrono::system_clock::now());
+
+  CreateTestActivitiesRecords(start_time, foo, bar);
+
+  { // Interval covers all entries.
+    auto maybe_result = Activity::LoadStatsForTopLevelTasksInInterval(
+        db(),
+        start_time,
+        start_time + std::chrono::minutes(20));
+    VerifyActivityStats(maybe_result, {
+      {*parent_foo.id(), std::chrono::minutes(12)},
+      {*bar.id(), std::chrono::minutes(8)},
+    });
+  }
+  {
+    // Interval partially intersects first entry at start.
+    auto maybe_result = Activity::LoadStatsForTopLevelTasksInInterval(
+        db(),
+        start_time - std::chrono::minutes(1),
+        start_time + std::chrono::minutes(3));
+    VerifyActivityStats(maybe_result, {
+      {*parent_foo.id(), std::chrono::minutes(3)},
+    });
+  }
+  {
+    // Interval partially intersects first entry at end and
+    // second entry at start.
+    auto maybe_result = Activity::LoadStatsForTopLevelTasksInInterval(
+        db(),
+        start_time + std::chrono::minutes(3),
+        start_time + std::chrono::minutes(9));
+    VerifyActivityStats(maybe_result, {
+      {*parent_foo.id(), std::chrono::minutes(2)},
+      {*bar.id(), std::chrono::minutes(4)},
+    });
+  }
+  {
+    // First entry fully covers interval.
+    auto maybe_result = Activity::LoadStatsForTopLevelTasksInInterval(
+        db(),
+        start_time + std::chrono::minutes(1),
+        start_time + std::chrono::minutes(2));
+    VerifyActivityStats(maybe_result, {
+      {*parent_foo.id(), std::chrono::minutes(1)},
     });
   }
 }

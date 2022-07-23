@@ -116,6 +116,30 @@ outcome::std_result<std::vector<Task>> Task::LoadChildTasks(
 }
 
 // static
+outcome::std_result<int64_t> Task::ChildTasksCount(
+    Database* db,
+    Task::Id task_id) noexcept {
+  static const std::string_view kQuery =
+      "SELECT count(*) FROM Tasks WHERE parent_task_id = :id";
+  const std::unordered_map<std::string, Database::Param> params = {
+    {":id", Database::Param(task_id)},
+  };
+  auto maybe_rows = db->Select(kQuery, params);
+  if (!maybe_rows) {
+    return maybe_rows.error();
+  }
+  SelectRows& rows = maybe_rows.value();
+  const auto next_outcome = rows.NextRow();
+  VERIFY(next_outcome != SelectRows::kOutcomeDone);
+  if (!next_outcome) {
+    return next_outcome.error();
+  }
+  const std::optional<int64_t> count = rows.Int64Column(0);
+  VERIFY(count);
+  return *count;
+}
+
+// static
 outcome::std_result<std::vector<Task>> Task::LoadWithQuery(
     Database* db, std::string_view query,
     const std::unordered_map<std::string, Database::Param>& params) noexcept {

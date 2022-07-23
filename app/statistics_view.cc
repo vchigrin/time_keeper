@@ -184,20 +184,28 @@ bool StatisticsView::OnDrawingButtonPressed(GdkEventButton* evt) noexcept {
     }
   }
   if (chosen_task) {
-    auto activities_list = Activity::LoadFiltered(
-        &app_state_->db_for_read_only(),
-        chosen_task->id(),
-        from_time_,
-        to_time_);
-    // TODO(vchigrin): Better error handling.
-    VERIFY(activities_list);
-    Glib::RefPtr<FilteredActivitiesDialog> dlg =
-        GetWindowDerived<FilteredActivitiesDialog>(
-            resource_builder_, "filtered_activities_dialog", app_state_);
-    dlg->SetActivitiesList(activities_list.value());
-    dlg->run();
-    dlg->hide();
-    // User may have edited some of the activities.
+    if (!current_parent_task_id_ && HasChildren(*chosen_task)) {
+      current_parent_task_id_ = chosen_task->id();
+      Recalculate();
+    } else {
+      auto activities_list = Activity::LoadFiltered(
+          &app_state_->db_for_read_only(),
+          chosen_task->id(),
+          from_time_,
+          to_time_);
+      // TODO(vchigrin): Better error handling.
+      VERIFY(activities_list);
+      Glib::RefPtr<FilteredActivitiesDialog> dlg =
+          GetWindowDerived<FilteredActivitiesDialog>(
+              resource_builder_, "filtered_activities_dialog", app_state_);
+      dlg->SetActivitiesList(activities_list.value());
+      dlg->run();
+      dlg->hide();
+      // User may have edited some of the activities.
+      Recalculate();
+    }
+  } else if (current_parent_task_id_) {
+    current_parent_task_id_ = std::nullopt;
     Recalculate();
   }
   return false;  // Allow event propagation.
@@ -283,9 +291,15 @@ Cairo::RectangleInt StatisticsView::DrawStatEntryRect(
 }
 
 void StatisticsView::Recalculate() noexcept {
-  auto maybe_stats = Activity::LoadStatsForInterval(
-      &app_state_->db_for_read_only(),
-      from_time_, to_time_);
+  const outcome::std_result<std::vector<Activity::StatEntry>> maybe_stats =
+      current_parent_task_id_ ?
+          Activity::LoadStatsForInterval(
+              &app_state_->db_for_read_only(),
+              from_time_, to_time_,
+              *current_parent_task_id_) :
+          Activity::LoadStatsForTopLevelTasksInInterval(
+              &app_state_->db_for_read_only(),
+              from_time_, to_time_);
   // TODO(vchigrin): Better error handling.
   VERIFY(maybe_stats);
   displayed_stats_.clear();
@@ -322,4 +336,15 @@ void StatisticsView::OnExistingTaskChanged(const Task& task) noexcept {
     it->second = task;
   }
 }
+
+bool StatisticsView::HasChildren(const Task& task) const noexcept {
+  VERIFY(task.id());
+  const auto maybe_child_count = Task::ChildTasksCount(
+      &app_state_->db_for_read_only(),
+      *task.id());
+  // TODO(vchigrin): Better error handling.
+  VERIFY(maybe_child_count);
+  return maybe_child_count.value() != 0;
+}
+
 }  // namespace m_time_tracker

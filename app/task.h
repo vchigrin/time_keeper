@@ -32,6 +32,9 @@ class Task {
       Database* db) noexcept;
   static outcome::std_result<std::vector<Task>> LoadChildTasks(
       Database* db, const Task& parent) noexcept;
+  static outcome::std_result<int64_t> ChildTasksCount(
+      Database* db,
+      Task::Id task_id) noexcept;
 
   outcome::std_result<void> Save(Database* db) noexcept;
 

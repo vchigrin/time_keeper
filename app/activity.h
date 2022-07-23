@@ -60,8 +60,16 @@ class Activity {
   // If some Activity overlaps interval boundary, only part of the
   // activity that in the boundary will be accounted.
   // Not completed activities are not accounted.
+  // Only children of specified parent task is accounted.
   static outcome::std_result<std::vector<StatEntry>>
       LoadStatsForInterval(
+          Database* db,
+          const TimePoint& interval_start,
+          const TimePoint& interval_end,
+          Task::Id parent_task_id) noexcept;
+  // Like LoadStatsForInterval, but accounts only tasks without children.
+  static outcome::std_result<std::vector<StatEntry>>
+      LoadStatsForTopLevelTasksInInterval(
           Database* db,
           const TimePoint& interval_start,
           const TimePoint& interval_end) noexcept;
@@ -122,6 +130,9 @@ class Activity {
   static outcome::std_result<std::vector<Activity>> LoadWithQuery(
       Database* db, std::string_view query) noexcept;
   static Activity CreateFromSelectRow(SelectRows* row) noexcept;
+  static outcome::std_result<std::vector<Activity::StatEntry>>
+      StatsFromSelectResults(
+          outcome::std_result<SelectRows> maybe_rows) noexcept;
 
   static TimePoint TimePointFromInt(int64_t val) noexcept {
     const std::time_t time_val = static_cast<std::time_t>(val);

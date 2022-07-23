@@ -49,12 +49,16 @@ class StatisticsView {
   void SetFontForBarDrawing(
       const Glib::RefPtr<Pango::Layout>& pango_layout) noexcept;
   int CalculageContentHeight() noexcept;
+  bool HasChildren(const Task& task) const noexcept;
 
   Gtk::Button* btn_to_ = nullptr;
   Gtk::Button* btn_from_ = nullptr;
   Gtk::DrawingArea* drawing_ = nullptr;
   Activity::TimePoint to_time_;
   Activity::TimePoint from_time_;
+  // If not none, only children of specified parent task is displayed.
+  // Else - statistics for top-level tasks are displayed.
+  std::optional<Task::Id> current_parent_task_id_;
   MainWindow* const main_window_;
   Glib::RefPtr<Gtk::Builder> resource_builder_;
   AppState* const app_state_;
