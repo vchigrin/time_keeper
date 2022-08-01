@@ -31,6 +31,7 @@ class MainWindow : public Gtk::Window {
  private:
   void InitializeWidgetPointers(
       const Glib::RefPtr<Gtk::Builder>& builder) noexcept;
+  void StartTaskTimer() noexcept;
 
   void OnBtnMenuClicked() noexcept;
   bool OnStackSidebarButtonReleased(GdkEventButton*) noexcept;

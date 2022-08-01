@@ -4,6 +4,8 @@
 
 #include "app/app_state.h"
 
+#include "app/running_task.h"
+
 namespace m_time_tracker {
 
 // static
@@ -22,7 +24,31 @@ outcome::std_result<AppState> AppState::Open(
   if (!activity_init_result) {
     return activity_init_result.error();
   }
-  return AppState(std::move(maybe_db.value()));
+  const auto running_task_init_result =
+        RunningTask::EnsureTableCreated(&maybe_db.value());
+  if (!running_task_init_result) {
+    return running_task_init_result.error();
+  }
+  const auto maybe_running_result = RunningTask::Load(&maybe_db.value());
+  if (!maybe_running_result) {
+    return maybe_running_result.error();
+  }
+  const std::optional<RunningTask>& maybe_running =
+      maybe_running_result.value();
+  if (!maybe_running) {
+    return AppState(std::move(maybe_db.value()), std::nullopt, std::nullopt);
+  } else {
+    const auto maybe_task = Task::LoadById(
+        &maybe_db.value(),
+        maybe_running->task_id());
+    if (!maybe_task) {
+      return maybe_task.error();
+    }
+    return AppState(
+        std::move(maybe_db.value()),
+        maybe_task.value(),
+        maybe_running->start_time());
+  }
 }
 
 outcome::std_result<void> AppState::SaveTask(Task* task) noexcept {
@@ -54,17 +80,24 @@ outcome::std_result<void> AppState::SaveChangedActivity(
   return save_result;
 }
 
-void AppState::StartRunningTask(Task new_task) noexcept {
+outcome::std_result<void> AppState::StartRunningTask(Task new_task) noexcept {
   VERIFY(new_task.id());
   running_task_ = std::move(new_task);
   running_task_start_time_ = Activity::GetCurrentTimePoint();
   sig_running_task_changed_(running_task_);
+  RunningTask rt(*running_task_->id(), *running_task_start_time_);
+  return rt.Save(&db_);
 }
 
-void AppState::DropRunningTask() noexcept {
+outcome::std_result<void> AppState::DropRunningTask() noexcept {
+  const auto db_result = RunningTask::Delete(&db_);
+  if (!db_result) {
+    return db_result;
+  }
   running_task_ = std::nullopt;
   running_task_start_time_ = std::nullopt;
   sig_running_task_changed_(running_task_);
+  return outcome::success();
 }
 
 outcome::std_result<void> AppState::RecordRunningTaskActivity() noexcept {
@@ -73,23 +106,32 @@ outcome::std_result<void> AppState::RecordRunningTaskActivity() noexcept {
   Activity new_activity(*running_task_, *running_task_start_time_);
   const Activity::TimePoint now = Activity::GetCurrentTimePoint();
   new_activity.SetInterval(*running_task_start_time_, now);
-  const auto outcome = new_activity.Save(&db_);
-  if (!outcome) {
-    return outcome;
+  const auto db_result = new_activity.Save(&db_);
+  if (!db_result) {
+    return db_result;
   }
   running_task_start_time_ = now;
   sig_after_activity_added_(new_activity);
-  return outcome;
+  return outcome::success();
 }
 
-void AppState::ChangeRunningTask(Task new_task) noexcept {
+outcome::std_result<void> AppState::ChangeRunningTask(Task new_task) noexcept {
   if (!running_task_) {
-    StartRunningTask(std::move(new_task));
+    const auto start_result = StartRunningTask(std::move(new_task));
+    if (!start_result) {
+      return start_result;
+    }
   } else {
     VERIFY(new_task.id());
     running_task_ = std::move(new_task);
+    RunningTask rt(*new_task.id(), *running_task_start_time_);
+    const auto db_result = rt.Save(&db_);
+    if (!db_result) {
+      return db_result;
+    }
   }
   sig_running_task_changed_(running_task_);
+  return outcome::success();
 }
 
 std::optional<Activity::Duration>

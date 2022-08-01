@@ -164,7 +164,14 @@ MainWindow::MainWindow(
       sigc::mem_fun(*this, &MainWindow::OnBtnMakeRecordClicked));
   running_task_changed_connection_ = app_state_->ConnectRunningTaskChanged(
       sigc::mem_fun(*this, &MainWindow::OnRunningTaskChanged));
-  OnRunningTaskChanged(std::nullopt);
+  if (app_state_->running_task()) {
+    task_list_model_->SelectTask(
+        app_state_->running_task()->id());
+    StartTaskTimer();
+  } else {
+    task_list_model_->SelectTask(std::nullopt);
+  }
+  OnRunningTaskChanged(app_state_->running_task());
 }
 
 MainWindow::~MainWindow() {
@@ -272,17 +279,26 @@ void MainWindow::OnBtnStartStopClicked() noexcept {
       // TODO(vchigrin): Better error handling.
       VERIFY(save_result);
     }
-    app_state_->DropRunningTask();
+    const auto drop_result = app_state_->DropRunningTask();
+    // TODO(vchigrin): Better error handling.
+    VERIFY(drop_result);
   } else {
-    timer_connection_ = Glib::signal_timeout().connect_seconds(
-        sigc::mem_fun(*this, &MainWindow::OnTaskTimer), 1);
+    StartTaskTimer();
     Gtk::ListBoxRow* selected_row = lst_tasks_->get_selected_row();
     VERIFY(selected_row);  // Button should be disabled if selection is abent.
     const Task::Id task_id = task_list_model_->GetTaskIdForRow(selected_row);
     auto maybe_task = Task::LoadById(&app_state_->db_for_read_only(), task_id);
     VERIFY(maybe_task);
-    app_state_->StartRunningTask(maybe_task.value());
+    const auto start_result = app_state_->StartRunningTask(maybe_task.value());
+    // TODO(vchigrin): Better error handling.
+    VERIFY(start_result);
   }
+}
+
+void MainWindow::StartTaskTimer() noexcept {
+  VERIFY(!timer_connection_);
+  timer_connection_ = Glib::signal_timeout().connect_seconds(
+      sigc::mem_fun(*this, &MainWindow::OnTaskTimer), 1);
 }
 
 void MainWindow::OnBtnMakeRecordClicked() noexcept {
@@ -301,7 +317,9 @@ void MainWindow::OnLstTasksSelectionChanged(
         &app_state_->db_for_read_only(),
         *selected_task_id);
     VERIFY(maybe_task);
-    app_state_->ChangeRunningTask(std::move(maybe_task.value()));
+    const auto maybe_result = app_state_->ChangeRunningTask(
+        std::move(maybe_task.value()));
+    VERIFY(maybe_result);
   }
   UpdateBtnStartStop();
 }

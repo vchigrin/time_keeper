@@ -117,23 +117,6 @@ class Activity {
     return std::chrono::floor<Duration>(std::chrono::system_clock::now());
   }
 
- private:
-  Activity(Id id,
-           Task::Id task_id,
-           const TimePoint& start_time,
-           const std::optional<TimePoint>& end_time) noexcept
-      : id_(id),
-        task_id_(task_id),
-        start_time_(start_time),
-        end_time_(end_time) {}
-
-  static outcome::std_result<std::vector<Activity>> LoadWithQuery(
-      Database* db, std::string_view query) noexcept;
-  static Activity CreateFromSelectRow(SelectRows* row) noexcept;
-  static outcome::std_result<std::vector<Activity::StatEntry>>
-      StatsFromSelectResults(
-          outcome::std_result<SelectRows> maybe_rows) noexcept;
-
   static TimePoint TimePointFromInt(int64_t val) noexcept {
     const std::time_t time_val = static_cast<std::time_t>(val);
     static_assert(
@@ -152,6 +135,23 @@ class Activity {
         "Assume time_t is number of seconds since Jan 1. 1970");
     return static_cast<int64_t>(time_val);
   }
+
+ private:
+  Activity(Id id,
+           Task::Id task_id,
+           const TimePoint& start_time,
+           const std::optional<TimePoint>& end_time) noexcept
+      : id_(id),
+        task_id_(task_id),
+        start_time_(start_time),
+        end_time_(end_time) {}
+
+  static outcome::std_result<std::vector<Activity>> LoadWithQuery(
+      Database* db, std::string_view query) noexcept;
+  static Activity CreateFromSelectRow(SelectRows* row) noexcept;
+  static outcome::std_result<std::vector<Activity::StatEntry>>
+      StatsFromSelectResults(
+          outcome::std_result<SelectRows> maybe_rows) noexcept;
 
   static Duration DurationFromInt(int64_t duration) noexcept {
     return std::chrono::seconds(duration);

@@ -76,8 +76,8 @@ class AppState {
 
   // Must always be valid Task id. Previous task is silently dropped,
   // if any.
-  void StartRunningTask(Task new_task_id) noexcept;
-  void DropRunningTask() noexcept;
+  outcome::std_result<void> StartRunningTask(Task new_task_id) noexcept;
+  outcome::std_result<void> DropRunningTask() noexcept;
 
   // Makes Activity record about current task and continues running
   // the same task.
@@ -85,8 +85,8 @@ class AppState {
 
   // Changes Task without resetting run time.
   // Does not make complete Activity record in the DB -
-  // use |record_running_task_activity| for that.
-  void ChangeRunningTask(Task new_task) noexcept;
+  // use |RecordRunningTaskActivity| for that.
+  outcome::std_result<void> ChangeRunningTask(Task new_task) noexcept;
 
   // Returns nullopt if there is no running Task.
   std::optional<Activity::Duration> RunningTaskRunTime() const noexcept;
@@ -94,8 +94,18 @@ class AppState {
 
  private:
   // Expects DB with all tables alaready created.
-  explicit AppState(Database initalized_db) noexcept
-      : db_(std::move(initalized_db)) {}
+  AppState(Database initalized_db,
+           std::optional<Task> running_task,
+           std::optional<Activity::TimePoint> running_task_start_time) noexcept
+      : db_(std::move(initalized_db)),
+        running_task_(std::move(running_task)),
+        running_task_start_time_(std::move(running_task_start_time)) {
+    if (running_task_) {
+      VERIFY(running_task_start_time_);
+    } else {
+      VERIFY(!running_task_start_time_);
+    }
+  }
 
   SignalWithTask sig_existing_task_changed_;
   SignalWithTask sig_before_task_deleted_;

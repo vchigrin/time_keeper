@@ -246,17 +246,23 @@ void TaskListModelBase::OnChildTaskListRowSelected(
     auto* active_child_list_box = row->get_parent();
     {
       ScopedChangeValue supperss(&signals_suppressed_, true);
-      for (const auto& [task_id, row_info] : top_level_rows_) {
-        if (row_info->child_list_box &&
-            row_info->child_list_box.get() != active_child_list_box) {
-          row_info->child_list_box->unselect_row();
-        }
-      }
+      UnselectAllChilListBoxesExcept(
+          static_cast<Gtk::ListBox*>(active_child_list_box));
       list_box_->unselect_row();
     }
     const auto new_task_id = ChildTaskListModel::GetObjectIdForRow(row);
     VERIFY(new_task_id);
     SetNewSelectedTaskId(new_task_id);
+  }
+}
+
+void TaskListModelBase::UnselectAllChilListBoxesExcept(
+    Gtk::ListBox* list_box_to_exclude) noexcept {
+  for (const auto& [task_id, row_info] : top_level_rows_) {
+    if (row_info->child_list_box &&
+        row_info->child_list_box.get() != list_box_to_exclude) {
+      row_info->child_list_box->unselect_row();
+    }
   }
 }
 
@@ -483,6 +489,38 @@ void TaskListModelBase::SetNewSelectedTaskId(
   if (!signals_suppressed_) {
     selected_task_id_ = new_id;
     sig_selected_task_id_changed_(new_id);
+  }
+}
+
+void TaskListModelBase::SelectTask(
+    const std::optional<Task::Id>& new_selected_task_id) noexcept {
+  if (!new_selected_task_id) {
+    UnselectAllChilListBoxesExcept(nullptr);
+    list_box_->unselect_row();
+    return;
+  }
+  auto it = top_level_rows_.find(*new_selected_task_id);
+  if (it != top_level_rows_.end()) {
+    list_box_->select_row(*it->second->task_row.get());
+  } else {
+    const TaskListModelBase::TopLevelRowInfo* parent_row_info =
+        TaskListModelBase::FindTopLevelRowInfoForChild(*new_selected_task_id);
+    VERIFY(parent_row_info);
+    const auto it_child = std::find_if(
+        parent_row_info->child_tasks.begin(),
+        parent_row_info->child_tasks.end(),
+        [new_selected_task_id](const Task& t) {
+          return t.id() == new_selected_task_id;
+        });
+    VERIFY(it_child != parent_row_info->child_tasks.end());
+    UnselectAllChilListBoxesExcept(
+        parent_row_info->child_list_box.get());
+    Gtk::ListBoxRow* child_list_box_row =
+        parent_row_info->child_list_box->get_row_at_index(
+            static_cast<int>(it_child - parent_row_info->child_tasks.begin()));
+    VERIFY(child_list_box_row);
+    parent_row_info->child_list_box->select_row(
+        *child_list_box_row);
   }
 }
 

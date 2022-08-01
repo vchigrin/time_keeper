@@ -48,6 +48,9 @@ class TaskListModelBase: public Gio::ListStore<Gtk::Widget> {
     return selected_task_id_;
   }
 
+  void SelectTask(
+      const std::optional<Task::Id>& new_selected_task_id) noexcept;
+
  protected:
   TaskListModelBase(AppState* app_state, bool should_display_archived) noexcept;
   friend class ChildTaskListModel;
@@ -111,13 +114,15 @@ class TaskListModelBase: public Gio::ListStore<Gtk::Widget> {
       TopLevelRowInfo* new_parent_row_info,
       const Task& t) noexcept;
   void EnsureProperTopLevelControlStyle(
-     TopLevelRowInfo* row_info) noexcept;
+      TopLevelRowInfo* row_info) noexcept;
   void SetNewSelectedTaskId(
       const std::optional<Task::Id>& new_id) noexcept;
 
   guint FindItem(const TopLevelRowInfo& row_info) const noexcept;
   TopLevelRowInfo* FindTopLevelRowInfoForChild(
       Task::Id child_task_id) const noexcept;
+  void UnselectAllChilListBoxesExcept(
+      Gtk::ListBox* list_box_to_exclude) noexcept;
 
   AppState* const app_state_;
   const bool should_display_archived_;
