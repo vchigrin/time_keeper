@@ -174,6 +174,25 @@ outcome::std_result<Activity> Activity::LoadById(
 }
 
 // static
+outcome::std_result<std::optional<Activity::TimePoint>>
+    Activity::LoadEarliestActivityStart(Database* db) noexcept {
+  auto maybe_rows = db->Select("SELECT min(start_time) FROM Activities");
+  if (!maybe_rows) {
+    return maybe_rows.error();
+  }
+  SelectRows& rows = maybe_rows.value();
+  const auto next_outcome = rows.NextRow();
+  if (!next_outcome) {
+    return next_outcome.error();
+  }
+  const std::optional<int64_t> start_time = rows.Int64Column(0);
+  if (!start_time) {
+    return std::nullopt;
+  }
+  return TimePointFromInt(*start_time);
+}
+
+// static
 outcome::std_result<void> Activity::Delete(Database* db, Id id) noexcept {
   const std::unordered_map<std::string, Database::Param> params = {
     {":id", Database::Param(id)},

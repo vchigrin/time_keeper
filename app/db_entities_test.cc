@@ -331,6 +331,37 @@ TEST_F(DbEntitiesTest, ActivityLoad) {
   }
 }
 
+TEST_F(DbEntitiesTest, LoadEarliestActivityStart) {
+  Task foo("foo");
+
+  outcome::std_result<void> save_outcome = foo.Save(db());
+  ASSERT_TRUE(save_outcome);
+  {
+    // Empty DB.
+    outcome::std_result<std::optional<Activity::TimePoint>> maybe_tp =
+        Activity::LoadEarliestActivityStart(db());
+    ASSERT_TRUE(maybe_tp);
+    EXPECT_TRUE(maybe_tp.value() == std::nullopt);
+  }
+
+  const Activity::TimePoint start_time =
+      std::chrono::floor<std::chrono::seconds>(
+          std::chrono::system_clock::now());
+
+  Activity first(foo, start_time);
+  first.SetInterval(start_time, start_time + std::chrono::minutes(3));
+  Activity second(foo, start_time + std::chrono::minutes(3));
+
+  ASSERT_TRUE(first.Save(db()));
+  ASSERT_TRUE(second.Save(db()));
+  {
+    outcome::std_result<std::optional<Activity::TimePoint>> maybe_tp =
+        Activity::LoadEarliestActivityStart(db());
+    ASSERT_TRUE(maybe_tp);
+    EXPECT_TRUE(maybe_tp.value() == start_time);
+  }
+}
+
 void DbEntitiesTest::CreateTestActivitiesRecords(
     const Activity::TimePoint start_time,
     const Task& foo, const Task& bar) noexcept {

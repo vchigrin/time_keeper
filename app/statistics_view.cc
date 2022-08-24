@@ -20,6 +20,11 @@ namespace m_time_tracker {
 namespace {
 
 constexpr int kBarPadding = 10;
+constexpr std::string_view kIntervalNone = "INTERVAL_NONE";
+constexpr std::string_view kInterval24h = "INTERVAL_24H";
+constexpr std::string_view kIntervalWeek = "INTERVAL_WEEK";
+constexpr std::string_view kInterval30d = "INTERVAL_30D";
+constexpr std::string_view kIntervalAll = "INTERVAL_ALL";
 
 void SetDateToButton(
     const Activity::TimePoint time_point,
@@ -106,6 +111,8 @@ StatisticsView::StatisticsView(
       sigc::mem_fun(*this, &StatisticsView::OnDrawingButtonPressed));
   existing_task_changed_connection_ = app_state_->ConnectExistingTaskChanged(
       sigc::mem_fun(*this, &StatisticsView::OnExistingTaskChanged));
+  cmb_quick_select_->signal_changed().connect(
+      sigc::mem_fun(*this, &StatisticsView::OnComboQuickSelectChanged));
 }
 
 StatisticsView::~StatisticsView() {
@@ -117,6 +124,8 @@ void StatisticsView::InitializeWidgetPointers(
   btn_from_ = GetWidgetChecked<Gtk::Button>(builder, "btn_stat_from");
   btn_to_ = GetWidgetChecked<Gtk::Button>(builder, "btn_stat_to");
   drawing_ = GetWidgetChecked<Gtk::DrawingArea>(builder, "drawing_stat");
+  cmb_quick_select_ = GetWidgetChecked<Gtk::ComboBoxText>(
+      builder, "cmb_quick_select");
 }
 
 void StatisticsView::EditDate(Activity::TimePoint* timepoint) noexcept {
@@ -345,6 +354,43 @@ bool StatisticsView::HasChildren(const Task& task) const noexcept {
   // TODO(vchigrin): Better error handling.
   VERIFY(maybe_child_count);
   return maybe_child_count.value() != 0;
+}
+
+void StatisticsView::OnComboQuickSelectChanged() noexcept {
+  const std::string str_quick_select_id = cmb_quick_select_->get_active_id();
+  VERIFY(!str_quick_select_id.empty());
+  if (str_quick_select_id == kIntervalNone) {
+    return;
+  }
+  to_time_ = Activity::GetCurrentTimePoint();
+  // TODO(vchigrin): Use chrono::days in C++20.
+  static constexpr auto kDay = std::chrono::hours(24);
+  if (str_quick_select_id == kInterval24h) {
+    from_time_ = to_time_ - std::chrono::hours(24);
+  } else if (str_quick_select_id == kIntervalWeek) {
+    from_time_ = to_time_ - kDay * 7;
+  } else if (str_quick_select_id == kInterval30d) {
+    from_time_ = to_time_ - kDay * 30;
+  } else if (str_quick_select_id == kIntervalAll) {
+    auto earliest_start_or_error = Activity::LoadEarliestActivityStart(
+        &app_state_->db_for_read_only());
+    // TODO(vchigrin): Better error handling.
+    VERIFY(earliest_start_or_error);
+    const std::optional<Activity::TimePoint> maybe_from =
+        earliest_start_or_error.value();
+    if (maybe_from) {
+      from_time_ = *maybe_from;
+    } else {
+      // No activities yet.
+      from_time_ = to_time_;
+    }
+  } else {
+    VERIFY(false);  // Unexpected ID in combo box.
+  }
+  SetDateToButton(from_time_, btn_from_);
+  SetDateToButton(to_time_, btn_to_);
+  Recalculate();
+  cmb_quick_select_->set_active_id(std::string(kIntervalNone));
 }
 
 }  // namespace m_time_tracker

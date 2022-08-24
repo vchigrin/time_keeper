@@ -50,10 +50,12 @@ class StatisticsView {
       const Glib::RefPtr<Pango::Layout>& pango_layout) noexcept;
   int CalculageContentHeight() noexcept;
   bool HasChildren(const Task& task) const noexcept;
+  void OnComboQuickSelectChanged() noexcept;
 
   Gtk::Button* btn_to_ = nullptr;
   Gtk::Button* btn_from_ = nullptr;
   Gtk::DrawingArea* drawing_ = nullptr;
+  Gtk::ComboBoxText* cmb_quick_select_ = nullptr;
   Activity::TimePoint to_time_;
   Activity::TimePoint from_time_;
   // If not none, only children of specified parent task is displayed.
