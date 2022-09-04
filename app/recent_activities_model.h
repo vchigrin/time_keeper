@@ -10,13 +10,14 @@
 namespace m_time_tracker {
 
 class AppState;
+class MainWindow;
 
 class RecentActivitiesModel: public ActivitiesListModelBase {
  protected:
   friend class ListModelBase<Activity>;
   RecentActivitiesModel(
       AppState* app_state,
-      Gtk::Window* parent_window,
+      MainWindow* main_window,
       Glib::RefPtr<Gtk::Builder> resource_builder) noexcept;
 
  private:

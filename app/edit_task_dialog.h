@@ -14,13 +14,15 @@
 namespace m_time_tracker {
 
 class AppState;
+class MainWindow;
 
 class EditTaskDialog : public Gtk::Dialog {
  public:
   EditTaskDialog(
       GtkDialog* dlg,
       const Glib::RefPtr<Gtk::Builder>& builder,
-      AppState* app_state);
+      AppState* app_state,
+      MainWindow* main_window) noexcept;
 
   void set_task(Task* task) noexcept {
     task_ = task;
@@ -42,6 +44,7 @@ class EditTaskDialog : public Gtk::Dialog {
   Gtk::CheckButton* chk_archived_ = nullptr;
   Gtk::ComboBoxText* cmb_parent_task_ = nullptr;
   AppState* app_state_ = nullptr;
+  MainWindow* main_window_ = nullptr;
   Task* task_ = nullptr;
 };
 

@@ -14,6 +14,7 @@
 #include "app/filtered_activities_dialog.h"
 #include "app/ui_helpers.h"
 #include "app/utils.h"
+#include "app/main_window.h"
 
 namespace m_time_tracker {
 
@@ -202,11 +203,14 @@ bool StatisticsView::OnDrawingButtonPressed(GdkEventButton* evt) noexcept {
           chosen_task->id(),
           from_time_,
           to_time_);
-      // TODO(vchigrin): Better error handling.
+      if (!activities_list) {
+        main_window_->OnFatalError(activities_list.assume_error());
+      }
       VERIFY(activities_list);
       Glib::RefPtr<FilteredActivitiesDialog> dlg =
           GetWindowDerived<FilteredActivitiesDialog>(
-              resource_builder_, "filtered_activities_dialog", app_state_);
+              resource_builder_, "filtered_activities_dialog", app_state_,
+              main_window_);
       dlg->SetActivitiesList(activities_list.value());
       dlg->run();
       dlg->hide();
@@ -309,8 +313,9 @@ void StatisticsView::Recalculate() noexcept {
           Activity::LoadStatsForTopLevelTasksInInterval(
               &app_state_->db_for_read_only(),
               from_time_, to_time_);
-  // TODO(vchigrin): Better error handling.
-  VERIFY(maybe_stats);
+  if (!maybe_stats) {
+    main_window_->OnFatalError(maybe_stats.assume_error());
+  }
   displayed_stats_.clear();
   displayed_stats_.reserve(maybe_stats.value().size());
   for (const Activity::StatEntry& stat : maybe_stats.value()) {
@@ -328,8 +333,9 @@ void StatisticsView::Recalculate() noexcept {
       auto maybe_task = Task::LoadById(
           &app_state_->db_for_read_only(),
           entry.stat.task_id);
-      // TODO(vchigrin): Better error handling.
-      VERIFY(maybe_task);
+      if (!maybe_task) {
+        main_window_->OnFatalError(maybe_task.assume_error());
+      }
       tasks_cache_.insert({
         entry.stat.task_id, std::move(maybe_task.value())});
     }
@@ -351,8 +357,9 @@ bool StatisticsView::HasChildren(const Task& task) const noexcept {
   const auto maybe_child_count = Task::ChildTasksCount(
       &app_state_->db_for_read_only(),
       *task.id());
-  // TODO(vchigrin): Better error handling.
-  VERIFY(maybe_child_count);
+  if (!maybe_child_count) {
+    main_window_->OnFatalError(maybe_child_count.assume_error());
+  }
   return maybe_child_count.value() != 0;
 }
 
@@ -374,8 +381,9 @@ void StatisticsView::OnComboQuickSelectChanged() noexcept {
   } else if (str_quick_select_id == kIntervalAll) {
     auto earliest_start_or_error = Activity::LoadEarliestActivityStart(
         &app_state_->db_for_read_only());
-    // TODO(vchigrin): Better error handling.
-    VERIFY(earliest_start_or_error);
+    if (!earliest_start_or_error) {
+      main_window_->OnFatalError(earliest_start_or_error.assume_error());
+    }
     const std::optional<Activity::TimePoint> maybe_from =
         earliest_start_or_error.value();
     if (maybe_from) {

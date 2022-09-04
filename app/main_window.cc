@@ -220,7 +220,7 @@ void MainWindow::OnBtnNewTaskClicked() noexcept {
 void MainWindow::EditTask(Task* task) noexcept {
   Glib::RefPtr<EditTaskDialog> edit_task_dialog =
       GetWindowDerived<EditTaskDialog>(
-          resource_builder_, "edit_task_dialog", app_state_);
+          resource_builder_, "edit_task_dialog", app_state_, this);
   edit_task_dialog->set_task(task);
   while (true) {
     if (edit_task_dialog->run() != Gtk::RESPONSE_OK) {
@@ -245,7 +245,9 @@ void MainWindow::EditTask(Task* task) noexcept {
     }
 
     const auto save_result = app_state_->SaveTask(task);
-    // TODO(vchigrin): Better error handling.
+    if (!save_result) {
+      OnFatalError(save_result.assume_error());
+    }
     VERIFY(save_result);
     break;
   }
@@ -276,12 +278,14 @@ void MainWindow::OnBtnStartStopClicked() noexcept {
     const int result = message_dlg.run();
     if (result == Gtk::RESPONSE_YES) {
       const auto save_result = app_state_->RecordRunningTaskActivity();
-      // TODO(vchigrin): Better error handling.
-      VERIFY(save_result);
+      if (!save_result) {
+        OnFatalError(save_result.assume_error());
+      }
     }
     const auto drop_result = app_state_->DropRunningTask();
-    // TODO(vchigrin): Better error handling.
-    VERIFY(drop_result);
+    if (!drop_result) {
+      OnFatalError(drop_result.assume_error());
+    }
   } else {
     StartTaskTimer();
     Gtk::ListBoxRow* selected_row = lst_tasks_->get_selected_row();
@@ -290,8 +294,9 @@ void MainWindow::OnBtnStartStopClicked() noexcept {
     auto maybe_task = Task::LoadById(&app_state_->db_for_read_only(), task_id);
     VERIFY(maybe_task);
     const auto start_result = app_state_->StartRunningTask(maybe_task.value());
-    // TODO(vchigrin): Better error handling.
-    VERIFY(start_result);
+    if (!start_result) {
+      OnFatalError(start_result.assume_error());
+    }
   }
 }
 
@@ -304,8 +309,9 @@ void MainWindow::StartTaskTimer() noexcept {
 void MainWindow::OnBtnMakeRecordClicked() noexcept {
   VERIFY(IsTaskRunning());
   const auto save_result = app_state_->RecordRunningTaskActivity();
-  // TODO(vchigrin): Better error handling.
-  VERIFY(save_result);
+  if (!save_result) {
+    OnFatalError(save_result.assume_error());
+  }
 }
 
 void MainWindow::OnLstTasksSelectionChanged(
@@ -370,6 +376,21 @@ void MainWindow::UpdateLblRunningTime() noexcept {
         running_task->name() %
         FormatRuntime(runtime, FormatMode::kShortWithSeconds)).str());
   }
+}
+
+void MainWindow::OnFatalError(const std::error_code& ec) noexcept {
+  // TODO(vchigrin): Localization.
+  const std::string message = (boost::format(
+      "Fatal error: \"%s\".\nApplication will now exit.") % ec.message()).str();
+  Gtk::MessageDialog dlg(
+      *this,
+      message,
+      /* use_markup */ false,
+      Gtk::MESSAGE_ERROR,
+      Gtk::BUTTONS_CLOSE,
+      /* modal */true);
+  dlg.run();
+  std::exit(1);
 }
 
 }  // namespace m_time_tracker

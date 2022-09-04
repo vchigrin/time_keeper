@@ -9,6 +9,7 @@
 #include <boost/algorithm/string/trim.hpp>
 
 #include "app/app_state.h"
+#include "app/main_window.h"
 #include "app/utils.h"
 
 namespace m_time_tracker {
@@ -44,10 +45,12 @@ void SetTimeFromConstrols(
 EditActivityDialog::EditActivityDialog(
     GtkDialog* dlg,
     const Glib::RefPtr<Gtk::Builder>& resource_builder,
-    AppState* app_state)
+    AppState* app_state,
+    MainWindow* main_window) noexcept
     : Gtk::Dialog(dlg),
       resource_builder_(resource_builder),
-      app_state_(app_state) {
+      app_state_(app_state),
+      main_window_(main_window) {
   InitializeWidgetPointers(resource_builder);
   btn_start_date_->signal_clicked().connect([this]() {
     EditDate(&start_time_);
@@ -62,8 +65,9 @@ EditActivityDialog::EditActivityDialog(
 void EditActivityDialog::FillTasksCombo() noexcept {
   cmb_tasks_->remove_all();
   auto maybe_tasks = Task::LoadAll(&app_state_->db_for_read_only());
-  // TODO(vchigrin): Better error handling.
-  VERIFY(maybe_tasks);
+  if (!maybe_tasks) {
+    main_window_->OnFatalError(maybe_tasks.assume_error());
+  }
   for (const Task& t : maybe_tasks.value()) {
     VERIFY(t.id());
     const std::string id = std::to_string(*t.id());

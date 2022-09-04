@@ -14,12 +14,14 @@
 namespace m_time_tracker {
 
 class AppState;
+class MainWindow;
 
 class ActivitiesListModelBase: public ListModelBase<Activity> {
  public:
   friend class ListModelBase<Activity>;
   ActivitiesListModelBase(
       AppState* app_state,
+      MainWindow* main_window,
       Gtk::Window* parent_window,
       Glib::RefPtr<Gtk::Builder> resource_builder) noexcept;
   Glib::RefPtr<Gtk::Widget> CreateRowFromObject(
@@ -38,6 +40,7 @@ class ActivitiesListModelBase: public ListModelBase<Activity> {
 
   std::vector<Activity> activities_;
 
+  MainWindow* const main_window_;
   Gtk::Window* const parent_window_;
   Glib::RefPtr<Gtk::Builder> resource_builder_;
 };

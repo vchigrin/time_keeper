@@ -5,14 +5,16 @@
 #include "app/recent_activities_model.h"
 
 #include "app/app_state.h"
+#include "app/main_window.h"
 
 namespace m_time_tracker {
 
 RecentActivitiesModel::RecentActivitiesModel(
     AppState* app_state,
-    Gtk::Window* parent_window,
+    MainWindow* main_window,
     Glib::RefPtr<Gtk::Builder> resource_builder) noexcept
-    : ActivitiesListModelBase(app_state, parent_window, resource_builder),
+    : ActivitiesListModelBase(
+          app_state, main_window, main_window, resource_builder),
       earliest_start_time_(Activity::GetCurrentTimePoint() -
           std::chrono::hours(24)) {
   auto maybe_recent = Activity::LoadAfter(

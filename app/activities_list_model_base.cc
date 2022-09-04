@@ -10,6 +10,7 @@
 #include <boost/format.hpp>
 
 #include "app/app_state.h"
+#include "app/main_window.h"
 #include "app/utils.h"
 
 namespace m_time_tracker {
@@ -27,12 +28,14 @@ std::string CreateSubtitle(const Activity& a) {
 
 ActivitiesListModelBase::ActivitiesListModelBase(
     AppState* app_state,
+    MainWindow* main_window,
     Gtk::Window* parent_window,
     Glib::RefPtr<Gtk::Builder> resource_builder) noexcept
     : ListModelBase(app_state),
+      main_window_(main_window),
       parent_window_(parent_window),
       resource_builder_(std::move(resource_builder)) {
-  VERIFY(parent_window_);
+  VERIFY(main_window_);
   all_connections_.emplace_back(app_state->ConnectExistingActivityChanged(
       sigc::mem_fun(*this, &ActivitiesListModelBase::ExistingObjectChanged)));
   all_connections_.emplace_back(app_state->ConnectAfterActivityAdded(
@@ -113,8 +116,9 @@ void ActivitiesListModelBase::DeleteActivity(
       /* modal */ true);
   if (message_dlg.run() == Gtk::RESPONSE_YES) {
     auto delete_result = app_state_->DeleteActivity(maybe_activity.value());
-    // TODO(vchigrin): Better error handling.
-    VERIFY(delete_result);
+    if (!delete_result) {
+      main_window_->OnFatalError(delete_result.assume_error());
+    }
   }
 }
 
@@ -125,7 +129,8 @@ void ActivitiesListModelBase::EditActivity(Activity::Id activity_id) noexcept {
   Activity& activity = maybe_activity.value();
   Glib::RefPtr<EditActivityDialog> edit_activity_dialog =
       GetWindowDerived<EditActivityDialog>(
-          resource_builder_, "edit_activity_dialog", app_state_);
+          resource_builder_, "edit_activity_dialog", app_state_,
+          main_window_);
   edit_activity_dialog->set_activity(&activity);
   while (true) {
     const int result = edit_activity_dialog->run();
@@ -145,8 +150,9 @@ void ActivitiesListModelBase::EditActivity(Activity::Id activity_id) noexcept {
       continue;
     }
     auto save_result = app_state_->SaveChangedActivity(&activity);
-    // TODO(vchigrin): Better error handling.
-    VERIFY(save_result);
+    if (!save_result) {
+      main_window_->OnFatalError(save_result.assume_error());
+    }
     break;
   }
   // Ensure we'll never produce dangling pointers. Note, that dialog object

@@ -9,6 +9,7 @@
 #include <boost/algorithm/string/trim.hpp>
 
 #include "app/app_state.h"
+#include "app/main_window.h"
 
 namespace m_time_tracker {
 
@@ -19,9 +20,11 @@ static constexpr char kNoneTaskId[] = "<NONE>";
 EditTaskDialog::EditTaskDialog(
     GtkDialog* dlg,
     const Glib::RefPtr<Gtk::Builder>& builder,
-    AppState* app_state)
+    AppState* app_state,
+    MainWindow* main_window) noexcept
     : Gtk::Dialog(dlg),
-      app_state_(app_state) {
+      app_state_(app_state),
+      main_window_(main_window) {
   edt_task_name_ = GetWidgetChecked<Gtk::Entry>(builder, "edt_task_name");
   btn_ok_ = GetWidgetChecked<Gtk::Button>(builder, "btn_ok");
   chk_archived_ = GetWidgetChecked<Gtk::CheckButton>(builder, "chk_archived");
@@ -80,8 +83,9 @@ std::vector<Task> EditTaskDialog::LoadChildTasks() noexcept {
     auto maybe_child_tasks = Task::LoadChildTasks(
         &app_state_->db_for_read_only(),
         *task_);
-    // TODO(vchigrin): Better error handling.
-    VERIFY(maybe_child_tasks);
+    if (!maybe_child_tasks) {
+      main_window_->OnFatalError(maybe_child_tasks.assume_error());
+    }
     return maybe_child_tasks.value();
   } else {
     return std::vector<Task>();
@@ -103,8 +107,9 @@ void EditTaskDialog::InitializeParentTaskCombo(
   }
   cmb_parent_task_->set_sensitive(true);
   auto maybe_tasks = Task::LoadTopLevel(&app_state_->db_for_read_only());
-  // TODO(vchigrin): Better error handling.
-  VERIFY(maybe_tasks);
+  if (!maybe_tasks) {
+    main_window_->OnFatalError(maybe_tasks.assume_error());
+  }
   for (const Task& t : maybe_tasks.value()) {
     VERIFY(t.id());
     const std::string id = std::to_string(*t.id());

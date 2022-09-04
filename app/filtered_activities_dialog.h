@@ -11,13 +11,15 @@
 namespace m_time_tracker {
 
 class AppState;
+class MainWindow;
 
 class FilteredActivitiesDialog : public Gtk::Dialog {
  public:
   FilteredActivitiesDialog(
       GtkDialog* dlg,
       const Glib::RefPtr<Gtk::Builder>& builder,
-      AppState* app_state);
+      AppState* app_state,
+      MainWindow* main_window) noexcept;
 
   void SetActivitiesList(const std::vector<Activity>& activities) noexcept {
     activities_model_->SetContent(activities);

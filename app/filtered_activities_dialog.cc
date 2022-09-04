@@ -9,12 +9,13 @@ namespace m_time_tracker {
 FilteredActivitiesDialog::FilteredActivitiesDialog(
     GtkDialog* dlg,
     const Glib::RefPtr<Gtk::Builder>& builder,
-    AppState* app_state)
+    AppState* app_state,
+    MainWindow* main_window) noexcept
     : Gtk::Dialog(dlg) {
   Gtk::ListBox* lst_filtered_activities =
       GetWidgetChecked<Gtk::ListBox>(builder, "lst_filtered_activities");
   activities_model_ = ActivitiesListModelBase::create<ActivitiesListModelBase>(
-      app_state, this, builder);
+      app_state, main_window, this, builder);
   lst_filtered_activities->bind_model(
       activities_model_,
       activities_model_->slot_create_widget());

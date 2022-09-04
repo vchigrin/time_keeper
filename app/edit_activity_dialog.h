@@ -15,13 +15,15 @@
 namespace m_time_tracker {
 
 class AppState;
+class MainWindow;
 
 class EditActivityDialog : public Gtk::Dialog {
  public:
   EditActivityDialog(
       GtkDialog* dlg,
       const Glib::RefPtr<Gtk::Builder>& builder,
-      AppState* app_state);
+      AppState* app_state,
+      MainWindow* main_window) noexcept;
 
   void set_activity(Activity* activity) noexcept {
     activity_ = activity;
@@ -52,6 +54,7 @@ class EditActivityDialog : public Gtk::Dialog {
   std::tm end_time_;
   Glib::RefPtr<Gtk::Builder> resource_builder_;
   AppState* const app_state_;
+  MainWindow* const main_window_;
 };
 
 }  // namespace m_time_tracker

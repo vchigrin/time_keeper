@@ -28,6 +28,9 @@ class MainWindow : public Gtk::Window {
 
   void EditTask(Task* task) noexcept;
 
+  [[noreturn]]
+  void OnFatalError(const std::error_code& ec) noexcept;
+
  private:
   void InitializeWidgetPointers(
       const Glib::RefPtr<Gtk::Builder>& builder) noexcept;
