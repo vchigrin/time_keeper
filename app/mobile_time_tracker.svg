@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<svg width="64" height="64" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
+ <!-- Created with SVG-edit - https://github.com/SVG-Edit/svgedit-->
+
+ <g class="layer">
+  <title>Layer 1</title>
+  <rect fill="#7f3f00" height="50" id="svg_1" stroke="#000000" width="40" x="12" y="7"/>
+  <rect fill="#999999" height="6" id="svg_2" stroke="#000000" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" stroke-width="0" width="14" x="25" y="3.9375"/>
+  <rect fill="#ffffff" height="40" id="svg_3" stroke="#000000" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" stroke-width="0" width="30" x="17" y="12"/>
+  <line fill="none" id="svg_4" stroke="#000000" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" x1="20" x2="44" y1="18" y2="18"/>
+  <line fill="none" id="svg_5" stroke="#000000" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" x1="20" x2="44" y1="23" y2="23"/>
+  <line fill="none" id="svg_6" stroke="#000000" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" x1="20" x2="44" y1="28" y2="28"/>
+  <line fill="none" id="svg_7" stroke="#000000" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" x1="20" x2="44" y1="33" y2="33"/>
+  <line fill="none" id="svg_8" stroke="#000000" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" x1="20" x2="44" y1="38" y2="38"/>
+  <line fill="none" id="svg_9" stroke="#000000" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" x1="20" x2="44" y1="43" y2="43"/>
+  <line fill="none" id="svg_10" stroke="#000000" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" x1="20" x2="44" y1="48" y2="48"/>
+  <ellipse cx="49.000001" cy="49" fill="#ffff56" id="svg_11" rx="10" ry="10" stroke="#000000" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null"/>
+  <ellipse cx="49" cy="49" fill="#ffffff" id="svg_13" rx="7" ry="7" stroke="#000000" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null"/>
+  <line fill="none" id="svg_17" stroke="#000000" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" x1="49" x2="52.3" y1="49" y2="47.3"/>
+  <rect fill="#ffff00" height="3" id="svg_18" stroke="#000000" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" width="5" x="46.5" y="36"/>
+  <rect fill="none" height="0" id="svg_19" stroke="#000000" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" stroke-width="null" width="3.7" x="-44.45" y="39.550001"/>
+  <line fill="none" id="svg_20" stroke="#000000" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" x1="49" x2="49" y1="53" y2="55"/>
+  <line fill="none" id="svg_21" stroke="#000000" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" x1="55" x2="53" y1="49" y2="49"/>
+  <line fill="none" id="svg_22" stroke="#000000" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" x1="43" x2="45" y1="49" y2="49"/>
+  <line fill="none" id="svg_23" stroke="#000000" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" x1="49" x2="49" y1="43" y2="45"/>
+  <line fill="none" id="svg_24" stroke="#000000" stroke-dasharray="null" stroke-linecap="null" stroke-linejoin="null" x1="49.000002" x2="47" y1="49" y2="45"/>
+ </g>
+</svg>
