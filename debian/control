@@ -1,0 +1,17 @@
+Source: mobile-time-tracker
+Maintainer: Vyacheslav Chigrin <vyacheslav.chigrin@izba.dev>
+Section: misc
+Priority: optional
+Standards-Version: 3.9.2
+Build-Depends: debhelper (>= 9),
+               libboost1.74-dev (>= 1.74),
+               libgtest-dev (>= 1.10),
+               libgtkmm-3.0-dev (>= 3.24),
+               libhandy-1-dev (>= 1.0),
+               libsqlite3-dev (>= 3.34),
+               meson (>= 0.56.2)
+
+Package: mobile-time-tracker
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends}
+Description: Time tracker for mobian.
