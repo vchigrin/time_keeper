@@ -115,7 +115,7 @@ void EditTaskListModel::ReCustomizeRow(
 
 void EditTaskListModel::OnRunningTaskChanged(
     const std::optional<Task>& new_running_task) noexcept {
-  for (const auto [task_id, btn_edit] : task_id_to_btn_edit_) {
+  for (const auto& [task_id, btn_edit] : task_id_to_btn_edit_) {
     if (new_running_task && new_running_task->id() == task_id) {
       btn_edit->set_sensitive(false);
     } else {
