@@ -9,12 +9,13 @@
 #include "app/activity.h"
 #include "app/app_state.h"
 #include "app/ui_helpers.h"
+#include "app/view_with_date_range.h"
 
 namespace m_time_tracker {
 
 class MainWindow;
 
-class StatisticsView {
+class StatisticsView : public ViewWithDateRange {
  public:
   StatisticsView(
       MainWindow* main_window,
@@ -29,11 +30,12 @@ class StatisticsView {
     std::optional<Cairo::RectangleInt> last_drawn_rect;
   };
   std::vector<DisplayedStatInfo> displayed_stats_;
+
+  void OnDateRangeChanged() noexcept override;
+
   void InitializeWidgetPointers(
       const Glib::RefPtr<Gtk::Builder>& builder) noexcept;
 
-  // Only date component is edited, time preserved.
-  void EditDate(Activity::TimePoint* timepoint) noexcept;
   bool StatisticsDraw(const Cairo::RefPtr<Cairo::Context>& ctx) noexcept;
   bool OnDrawingButtonPressed(GdkEventButton* evt) noexcept;
 
@@ -50,14 +52,8 @@ class StatisticsView {
       const Glib::RefPtr<Pango::Layout>& pango_layout) noexcept;
   int CalculageContentHeight() noexcept;
   bool HasChildren(const Task& task) const noexcept;
-  void OnComboQuickSelectChanged() noexcept;
 
-  Gtk::Button* btn_to_ = nullptr;
-  Gtk::Button* btn_from_ = nullptr;
   Gtk::DrawingArea* drawing_ = nullptr;
-  Gtk::ComboBoxText* cmb_quick_select_ = nullptr;
-  Activity::TimePoint to_time_;
-  Activity::TimePoint from_time_;
   // If not none, only children of specified parent task is displayed.
   // Else - statistics for top-level tasks are displayed.
   std::optional<Task::Id> current_parent_task_id_;
