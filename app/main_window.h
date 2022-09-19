@@ -10,6 +10,7 @@
 #include "app/activity.h"
 #include "app/ui_helpers.h"
 #include "app/app_state.h"
+#include "app/export_view.h"
 #include "app/statistics_view.h"
 
 namespace m_time_tracker {
@@ -73,6 +74,7 @@ class MainWindow : public Gtk::Window {
   // Timer is active only when task is running.
   sigc::connection timer_connection_;
   StatisticsView statistics_view_;
+  ExportView export_view_;
 };
 
 }  // namespace m_time_tracker

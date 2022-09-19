@@ -133,7 +133,8 @@ MainWindow::MainWindow(
     : Gtk::Window(wnd),
       resource_builder_(builder),
       app_state_(app_state),
-      statistics_view_(this, builder, app_state) {
+      statistics_view_(this, builder, app_state),
+      export_view_(this, builder, app_state) {
   VERIFY(app_state_);
   InitializeWidgetPointers(builder);
   page_stack_->property_visible_child().signal_changed().connect(

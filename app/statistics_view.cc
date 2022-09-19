@@ -6,11 +6,9 @@
 
 #include <pangomm/layout.h>
 
-#include <sstream>
 #include <string>
 #include <utility>
 
-#include "app/edit_date_dialog.h"
 #include "app/filtered_activities_dialog.h"
 #include "app/ui_helpers.h"
 #include "app/utils.h"
@@ -77,7 +75,7 @@ StatisticsView::StatisticsView(
         app_state,
         "btn_stat_from",
         "btn_stat_to",
-        "cmb_quick_select"),
+        "cmb_stat_quick_select_date"),
       main_window_(main_window),
       resource_builder_(resource_builder),
       app_state_(app_state) {
