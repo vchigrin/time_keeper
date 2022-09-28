@@ -5,6 +5,7 @@
 #include "app/edit_activity_dialog.h"
 
 #include <charconv>
+#include <vector>
 
 #include <boost/algorithm/string/trim.hpp>
 
@@ -64,11 +65,32 @@ EditActivityDialog::EditActivityDialog(
 
 void EditActivityDialog::FillTasksCombo() noexcept {
   cmb_tasks_->remove_all();
-  auto maybe_tasks = Task::LoadAll(&app_state_->db_for_read_only());
+  auto maybe_tasks = Task::LoadNotArchived(&app_state_->db_for_read_only());
   if (!maybe_tasks) {
     main_window_->OnFatalError(maybe_tasks.assume_error());
   }
-  for (const Task& t : maybe_tasks.value()) {
+  std::vector<Task> tasks = std::move(maybe_tasks.value());
+  if (activity_) {
+    // Task from current activity must always be present in combo,
+    // even if it archived.
+    const auto it_activity_task = std::find_if(
+        tasks.begin(),
+        tasks.end(),
+        [this](const Task& t) noexcept {
+          VERIFY(t.id());
+          return *t.id() == activity_->task_id();
+        });
+    if (it_activity_task == tasks.end()) {
+      auto maybe_cur_task = Task::LoadById(
+          &app_state_->db_for_read_only(),
+          activity_->task_id());
+      if (!maybe_cur_task) {
+        main_window_->OnFatalError(maybe_cur_task.assume_error());
+      }
+      tasks.push_back(std::move(maybe_cur_task.value()));
+    }
+  }
+  for (const Task& t : tasks) {
     VERIFY(t.id());
     const std::string id = std::to_string(*t.id());
     cmb_tasks_->append(id, t.name());
