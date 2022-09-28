@@ -497,6 +497,7 @@ void TaskListModelBase::SelectTask(
   if (!new_selected_task_id) {
     UnselectAllChilListBoxesExcept(nullptr);
     list_box_->unselect_row();
+    selected_task_id_ = new_selected_task_id;
     return;
   }
   auto it = top_level_rows_.find(*new_selected_task_id);
@@ -522,6 +523,7 @@ void TaskListModelBase::SelectTask(
     parent_row_info->child_list_box->select_row(
         *child_list_box_row);
   }
+  selected_task_id_ = new_selected_task_id;
 }
 
 }  // namespace m_time_tracker
