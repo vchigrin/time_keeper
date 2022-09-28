@@ -16,6 +16,7 @@
 namespace m_time_tracker {
 
 class EditTaskDialog;
+class RecentActivitiesModel;
 class TaskListModelBase;
 
 class MainWindow : public Gtk::Window {
@@ -66,11 +67,13 @@ class MainWindow : public Gtk::Window {
   Gtk::ListBox* lst_tasks_ = nullptr;
   Gtk::ListBox* lst_recent_activities_ = nullptr;
   Gtk::Box* box_statistics_ = nullptr;
+  Gtk::Box* box_recent_activities_ = nullptr;
   Gtk::StackSidebar* page_stack_sidebar_ = nullptr;
   Glib::RefPtr<Gtk::Builder> resource_builder_;
   AppState* const app_state_;
   sigc::connection running_task_changed_connection_;
   Glib::RefPtr<TaskListModelBase> task_list_model_;
+  Glib::RefPtr<RecentActivitiesModel> recent_activities_model_;
   // Timer is active only when task is running.
   sigc::connection timer_connection_;
   StatisticsView statistics_view_;

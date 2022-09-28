@@ -13,6 +13,9 @@ class AppState;
 class MainWindow;
 
 class RecentActivitiesModel: public ActivitiesListModelBase {
+ public:
+  void Recalculate() noexcept;
+
  protected:
   friend class ListModelBase<Activity>;
   RecentActivitiesModel(
@@ -23,7 +26,7 @@ class RecentActivitiesModel: public ActivitiesListModelBase {
  private:
   bool ShouldShowActivity(const Activity& a) noexcept override;
 
-  Activity::TimePoint earliest_start_time_;
+  Activity::TimePoint earliest_start_time_{};
 };
 
 }  // namespace m_time_tracker

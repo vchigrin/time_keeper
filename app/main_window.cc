@@ -153,12 +153,12 @@ MainWindow::MainWindow(
       sigc::mem_fun(*this, &MainWindow::OnLstTasksSelectionChanged));
   page_stack_sidebar_->signal_button_release_event().connect(
       sigc::mem_fun(*this, &MainWindow::OnStackSidebarButtonReleased));
-  Glib::RefPtr<RecentActivitiesModel> activities_model =
+  recent_activities_model_ =
       RecentActivitiesModel::create<RecentActivitiesModel>(
           app_state_, this, resource_builder_);
   lst_recent_activities_->bind_model(
-      activities_model,
-      activities_model->slot_create_widget());
+      recent_activities_model_,
+      recent_activities_model_->slot_create_widget());
   btn_start_stop_->signal_clicked().connect(
       sigc::mem_fun(*this, &MainWindow::OnBtnStartStopClicked));
   btn_make_record_->signal_clicked().connect(
@@ -198,6 +198,8 @@ void MainWindow::InitializeWidgetPointers(
   btn_start_stop_ = GetWidgetChecked<Gtk::Button>(builder, "btn_start_stop");
   btn_make_record_ = GetWidgetChecked<Gtk::Button>(builder, "btn_make_record");
   box_statistics_ = GetWidgetChecked<Gtk::Box>(builder, "box_statistics");
+  box_recent_activities_ = GetWidgetChecked<Gtk::Box>(
+      builder, "box_recent_activities");
 }
 
 void MainWindow::OnBtnMenuClicked() noexcept {
@@ -262,6 +264,9 @@ void MainWindow::OnPageStackVisibleChildChanged() noexcept {
   main_stack_->set_visible_child(*page_stack_);
   if (page_stack_->get_visible_child() == box_statistics_) {
     statistics_view_.Recalculate();
+  }
+  if (page_stack_->get_visible_child() == box_recent_activities_) {
+    recent_activities_model_->Recalculate();
   }
 }
 
