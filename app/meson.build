@@ -25,8 +25,6 @@ db_entities = static_library('db_entities',
                       'select_rows.h',
                       'task.cc',
                       'task.h',
-                      'utils.cc',
-                      'utils.h',
                       'verify.cc',
                       'verify.h',
                       include_directories : [project_include_dir],
@@ -34,6 +32,14 @@ db_entities = static_library('db_entities',
                         sqlite_dep,
                         boost_dep,
                       ])
+
+utils = static_library('utils',
+   'utils.cc',
+   'utils.h',
+   include_directories : [project_include_dir],
+   dependencies : [
+     boost_dep,
+   ])
 
 executable('mobile_time_tracker',
            'app_state.cc',
@@ -68,7 +74,7 @@ executable('mobile_time_tracker',
            install : true,
            gui_app: true,
            include_directories : [project_include_dir],
-           link_with: db_entities,
+           link_with: [db_entities, utils],
            # link_whole to prevent linker throw away contents of the resource
            # archive - we interested in "constructor" function that registers
            # resources in it.
@@ -82,7 +88,7 @@ tests_executable = executable('tests_executable',
            'db_entities_test.cc',
            'utils_test.cc',
            include_directories : [project_include_dir],
-           link_with: db_entities,
+           link_with: [db_entities, utils],
            dependencies : [
                gtest_dep,
                gtest_main_dep,

@@ -53,10 +53,9 @@ void ExportView::InitializeWidgetPointers(
 void ExportView::OnDateRangeChanged() noexcept {}
 
 void ExportView::OnBtnSelectFileClicked() noexcept {
-  // TODO(vchigrin): Localization
   Gtk::FileChooserDialog open_dlg(
       *main_window_,
-      "Select file",
+      _L("Select file"),
       Gtk::FILE_CHOOSER_ACTION_SAVE);
   open_dlg.add_button("_Cancel", Gtk::RESPONSE_CANCEL);
   open_dlg.add_button("_Open", Gtk::RESPONSE_OK);
@@ -83,17 +82,16 @@ void ExportView::OnBtnExportClicked() noexcept {
   if (export_result) {
     Gtk::MessageDialog message_dlg(
         *main_window_,
-        // TODO(vchigrin): Localization.
-        "Export completed successfully.",
+        _L("Export completed successfully."),
         /* use_markup */ false,
         Gtk::MESSAGE_INFO,
         Gtk::BUTTONS_OK,
         /* modal */ true);
     message_dlg.run();
   } else {
-    // TODO(vchigrin): Localization.
     const std::string error_message = boost::str(boost::format(
-        "Export failed. Error \"%1%\".") % export_result.error().message());
+        _L("Export failed. Error \"%1%\".")) %
+            export_result.error().message());
     Gtk::MessageDialog message_dlg(
         *main_window_,
         error_message,

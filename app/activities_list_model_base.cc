@@ -103,9 +103,8 @@ void ActivitiesListModelBase::DeleteActivity(
   auto maybe_task = Task::LoadById(
       &app_state_->db_for_read_only(), maybe_activity.value().task_id());
   VERIFY(maybe_task);
-  // TODO(vchigrin): Localization.
   const std::string message =
-      (boost::format("Delete activity for task \"%1%\"?") %
+      (boost::format(_L("Delete activity for task \"%1%\"?")) %
           maybe_task.value().name()).str();
   Gtk::MessageDialog message_dlg(
       *parent_window_,
@@ -140,8 +139,7 @@ void ActivitiesListModelBase::EditActivity(Activity::Id activity_id) noexcept {
     if (activity.end_time() <= activity.start_time()) {
       Gtk::MessageDialog message_dlg(
           *edit_activity_dialog.get(),
-          // TODO(vchigrin): Localization.
-          "Error - end time must be after start time.",
+          _L("Error - end time must be after start time."),
           /* use_markup */ false,
           Gtk::MESSAGE_ERROR,
           Gtk::BUTTONS_OK,

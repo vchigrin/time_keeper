@@ -4,9 +4,13 @@
 
 #pragma once
 
+#include <libintl.h>
+
 #include <ctime>
 #include <string>
 #include "app/activity.h"
+
+#define _L(x) gettext(x)
 
 namespace m_time_tracker {
 

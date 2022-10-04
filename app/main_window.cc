@@ -237,8 +237,7 @@ void MainWindow::EditTask(Task* task) noexcept {
         maybe_conflicting_task.value().id() != task->id()) {
       Gtk::MessageDialog message_dlg(
           *this,
-          // TODO(vchigrin): Localization.
-          "Error - this name already used by another task",
+          _L("Error - this name already used by another task"),
           /* use_markup */ false,
           Gtk::MESSAGE_ERROR,
           Gtk::BUTTONS_OK,
@@ -275,8 +274,7 @@ void MainWindow::OnBtnStartStopClicked() noexcept {
     timer_connection_.disconnect();
     Gtk::MessageDialog message_dlg(
         *this,
-        // TODO(vchigrin): Localization.
-        "Do you want make record about running task before stopping?",
+        _L("Do you want make record about running task before stopping?"),
         /* use_markup */ false,
         Gtk::MESSAGE_QUESTION,
         Gtk::BUTTONS_YES_NO,
@@ -371,23 +369,21 @@ void MainWindow::OnRunningTaskChanged(
 void MainWindow::UpdateLblRunningTime() noexcept {
   std::optional<Task> running_task = app_state_->running_task();
   if (!running_task) {
-    // TODO(vchigrin): Localization.
-    lbl_running_time_->set_text("<No task running>");
+    lbl_running_time_->set_text(_L("<No task running>"));
   } else {
     auto maybe_runtime = app_state_->RunningTaskRunTime();
     VERIFY(maybe_runtime);
     const Activity::Duration runtime = *maybe_runtime;
-    // TODO(vchigrin): Localization.
-    lbl_running_time_->set_text((boost::format("Running: %1% for %2%") %
+    lbl_running_time_->set_text((boost::format(_L("Running: %1% for %2%")) %
         running_task->name() %
         FormatRuntime(runtime, FormatMode::kShortWithSeconds)).str());
   }
 }
 
 void MainWindow::OnFatalError(const std::error_code& ec) noexcept {
-  // TODO(vchigrin): Localization.
   const std::string message = (boost::format(
-      "Fatal error: \"%s\".\nApplication will now exit.") % ec.message()).str();
+      _L("Fatal error: \"%s\".\nApplication will now exit.")) %
+          ec.message()).str();
   Gtk::MessageDialog dlg(
       *this,
       message,

@@ -26,8 +26,7 @@ std::string FormatRuntime(
         result += ".";
         break;
       case FormatMode::kLongWithoutSeconds:
-        // TODO(vchigrin): Localization.
-        result += " hours ";
+        result += _L(" hours ");
         break;
     }
 
@@ -44,8 +43,7 @@ std::string FormatRuntime(
       return result + (boost::format("%1$02d:%2$02d") %
           minutes.count() % seconds.count()).str();
     case FormatMode::kLongWithoutSeconds:
-      // TODO(vchigrin): Localization.
-      return result + (boost::format("%1% min") % minutes.count()).str();
+      return result + (boost::format(_L("%1% min")) % minutes.count()).str();
     default:
       NOTREACHED();
   }
