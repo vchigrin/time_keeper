@@ -4,6 +4,9 @@
 
 #include "app/recent_activities_model.h"
 
+#include <vector>
+#include <utility>
+
 #include "app/app_state.h"
 #include "app/main_window.h"
 
@@ -30,7 +33,13 @@ void RecentActivitiesModel::Recalculate() noexcept {
       &app_state_->db_for_read_only(),
       earliest_start_time_);
   VERIFY(maybe_recent);
-  SetContent(maybe_recent.value());
+  std::vector<Activity> recent = std::move(maybe_recent.value());
+  std::sort(
+      recent.begin(), recent.end(),
+      [](const Activity& first, const Activity& second) {
+        return first.start_time() < second.start_time();
+      });
+  SetContent(recent);
 }
 
 }  // namespace m_time_tracker
