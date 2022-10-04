@@ -2,64 +2,66 @@
 # Copyright (C) 2022 THE mobile_time_tracker'S COPYRIGHT HOLDER
 # This file is distributed under the same license as the mobile_time_tracker package.
 # Automatically generated, 2022.
+# Vyacheslav Chigrin <vyacheslav.chigrin@izba.dev>, 2022.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: mobile_time_tracker\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-05 01:19+0300\n"
-"PO-Revision-Date: 2022-10-05 01:19+0300\n"
-"Last-Translator: Automatically generated\n"
-"Language-Team: none\n"
+"POT-Creation-Date: 2022-10-05 01:44+0300\n"
+"PO-Revision-Date: 2022-10-06 00:53+0300\n"
+"Last-Translator: Vyacheslav Chigrin <vyacheslav.chigrin@izba.dev>\n"
+"Language-Team: Russian <vyacheslav.chigrin@izba.dev>\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=ASCII\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n"
-"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
+"X-Generator: Gtranslator 3.38.0\n"
 
 #: app/activities_list_model_base.cc:107
 #, boost-format
 msgid "Delete activity for task \"%1%\"?"
-msgstr ""
+msgstr "Удалить активность задачи \"%1%\"?"
 
 #: app/activities_list_model_base.cc:142
 msgid "Error - end time must be after start time."
-msgstr ""
+msgstr "Ошибка - конечное время должно быть после начального."
 
 #: app/edit_task_dialog.cc:99
 msgid "<NO TASK>"
-msgstr ""
+msgstr "<НЕТ ЗАДАЧИ>"
 
 #: app/export_view.cc:58
 msgid "Select file"
-msgstr ""
+msgstr "Выбрать файл"
 
 #: app/export_view.cc:85
 msgid "Export completed successfully."
-msgstr ""
+msgstr "Экспорт успешно произведён."
 
 #: app/export_view.cc:93
 #, boost-format
 msgid "Export failed. Error \"%1%\"."
-msgstr ""
+msgstr "Экспорт не удался. Ошибка \"%1%."
 
 #: app/main_window.cc:240
 msgid "Error - this name already used by another task"
-msgstr ""
+msgstr "Ошибка - это имя уже используется другой задачей."
 
 #: app/main_window.cc:277
 msgid "Do you want make record about running task before stopping?"
-msgstr ""
+msgstr "Хотите ли сделать запись о выполняющейся задаче перед остановкой?"
 
 #: app/main_window.cc:372
 msgid "<No task running>"
-msgstr ""
+msgstr "<Нет выполняющейся задачи>"
 
 #: app/main_window.cc:377
 #, boost-format
 msgid "Running: %1% for %2%"
-msgstr ""
+msgstr "Идёт: %1% на протяжении %2%"
 
 #: app/main_window.cc:385
 #, c-format, boost-format
@@ -67,120 +69,106 @@ msgid ""
 "Fatal error: \"%s\".\n"
 "Application will now exit."
 msgstr ""
+"Фатальная ошибка \"%s\".\n"
+"Приложение сейчас завершится."
 
 #: app/main_window.ui:82
 msgid "Task:"
-msgstr ""
+msgstr "Задача:"
 
 #: app/main_window.ui:104
 msgid "Start:"
-msgstr ""
-
-#: app/main_window.ui:150 app/main_window.ui:231
-msgid ":"
-msgstr ""
+msgstr "Начало:"
 
 #: app/main_window.ui:185
 msgid "End:"
-msgstr ""
+msgstr "Конец:"
 
 #: app/main_window.ui:405
 msgid "Task name"
-msgstr ""
+msgstr "Название задачи:"
 
 #: app/main_window.ui:428
 msgid "Parent task:"
-msgstr ""
+msgstr "Родительская задача:"
 
 #: app/main_window.ui:449
 msgid "Archived"
-msgstr ""
+msgstr "Архивная"
 
 #: app/main_window.ui:641
 msgid "Stop and record"
-msgstr ""
+msgstr "Остановить и сделать запись"
 
 #: app/main_window.ui:661
 msgid "Record activity"
-msgstr ""
+msgstr "Записать активность"
 
 #: app/main_window.ui:695
 msgid "Add new task"
-msgstr ""
+msgstr "Добавить новую задачу"
 
 #: app/main_window.ui:708
 msgid "Edit task list"
-msgstr ""
+msgstr "Редактировать список задач"
 
 #: app/main_window.ui:744
 msgid "Recent activities"
-msgstr ""
+msgstr "Недавние активности"
 
 #: app/main_window.ui:762 app/main_window.ui:879
 msgid "From:"
-msgstr ""
+msgstr "С:"
 
 #: app/main_window.ui:787 app/main_window.ui:904
 msgid "To:"
-msgstr ""
+msgstr "До:"
 
 #: app/main_window.ui:821 app/main_window.ui:938
 msgid "-- Quick select --"
-msgstr ""
+msgstr "-- Быстрый выбор --"
 
 #: app/main_window.ui:822 app/main_window.ui:939
 msgid "Last 24h"
-msgstr ""
+msgstr "Последние 24ч"
 
 #: app/main_window.ui:823 app/main_window.ui:940
 msgid "Last week"
-msgstr ""
+msgstr "Последняя неделя"
 
 #: app/main_window.ui:824 app/main_window.ui:941
 msgid "Last 30 days"
-msgstr ""
+msgstr "Последние 30 дней"
 
 #: app/main_window.ui:825 app/main_window.ui:942
 msgid "Beginning of recording"
-msgstr ""
+msgstr "С начала всех записей"
 
 #: app/main_window.ui:861
 msgid "Statistics"
-msgstr ""
+msgstr "Статистика"
 
 #: app/main_window.ui:955
 msgid "CSV file path:"
-msgstr ""
+msgstr "Путь к CSV файлу:"
 
-#: app/main_window.ui:971
-msgid "\n"
-msgstr ""
-
-#: app/main_window.ui:982
+#: app/main_window.ui:980
 msgid "Browse..."
-msgstr ""
+msgstr "Выбрать..."
 
-#: app/main_window.ui:1002
+#: app/main_window.ui:1000
 msgid "Perform export"
-msgstr ""
+msgstr "Произвести экспорт"
 
-#: app/main_window.ui:1016
+#: app/main_window.ui:1014
 msgid "Export to CSV"
-msgstr ""
-
-#: app/main_window.ui:1023
-msgid "page0"
-msgstr ""
-
-#: app/main_window.ui:1034
-msgid "page1"
-msgstr ""
+msgstr "Экспорт в CSV"
 
 #: app/utils.cc:29
 msgid " hours "
-msgstr ""
+msgstr " часы "
 
 #: app/utils.cc:46
 #, boost-format
 msgid "%1% min"
-msgstr ""
+msgstr "%1% мин"
