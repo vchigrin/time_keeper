@@ -96,7 +96,7 @@ std::vector<Task> EditTaskDialog::LoadChildTasks() noexcept {
 void EditTaskDialog::InitializeParentTaskCombo(
     const std::vector<Task>& child_tasks) noexcept {
   cmb_parent_task_->remove_all();
-  cmb_parent_task_->append(_L("<NO TASK>"), kNoneTaskId);
+  cmb_parent_task_->append(kNoneTaskId, _L("<NO TASK>"));
   if (!child_tasks.empty()) {
     // At present we support only one level in tasks hierarchy. Primly
     // due to difficulties in select task UI.
