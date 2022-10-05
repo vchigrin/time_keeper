@@ -28,6 +28,8 @@ void SetDateToButton(
     Gtk::Button* date_button) noexcept {
   const std::tm local_time = TimePointToLocal(time_point);
   std::stringstream sstrm;
+  // Use system locale for date/time formatting.
+  sstrm.imbue(std::locale(""));
   sstrm << std::put_time(&local_time, "%Y %b %d");
   date_button->set_label(sstrm.str());
 }

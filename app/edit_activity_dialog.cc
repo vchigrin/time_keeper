@@ -21,6 +21,8 @@ void SetDateToControls(
     const std::tm& local_time,
     Gtk::Button* date_button) noexcept {
   std::stringstream sstrm;
+  // Use system locale for date/time formatting.
+  sstrm.imbue(std::locale(""));
   sstrm << std::put_time(&local_time, "%Y %B %d");
   date_button->set_label(sstrm.str());
 }

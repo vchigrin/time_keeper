@@ -66,6 +66,8 @@ Activity::TimePoint TimePointFromLocal(std::tm local_time) noexcept {
 std::string FormatTimePoint(Activity::TimePoint time_point) noexcept {
   const std::tm local_time = TimePointToLocal(time_point);
   std::stringstream sstrm;
+  // Use system locale for date/time formatting.
+  sstrm.imbue(std::locale(""));
   sstrm << std::put_time(&local_time, "%b %d %H:%M");
   return sstrm.str();
 }
