@@ -32,6 +32,17 @@ class ScopedChangeValue {
   T* ptr_;
   T old_value_;
 };
+
+bool FirstTaskShouldPrecedeSecond(
+    const Task& first, const Task& second) noexcept {
+  if (first.is_archived() != second.is_archived()) {
+    // Non-archived task always go first.
+    return !first.is_archived();
+  }
+  // All other tasks are alphabetically ordered.
+  return first.name() < second.name();
+}
+
 }  // namespace
 
 
@@ -60,6 +71,11 @@ class ChildTaskListModel: public ListModelBase<Task> {
 
   Glib::RefPtr<Gtk::Widget> CreateRowFromObject(
       const Task& t) noexcept override;
+
+  bool FirstObjectShouldPrecedeSecond(
+     const Task& first, const Task& second) const noexcept override {
+    return FirstTaskShouldPrecedeSecond(first, second);
+  }
 
  private:
   const Task::Id parent_task_id_;
@@ -125,8 +141,19 @@ void TaskListModelBase::SetContent(const std::vector<Task>& tasks) noexcept {
   std::vector<Glib::RefPtr<Gtk::Widget>> row_controls;
   remove_all();
   top_level_rows_ = ExtractTopLevelRowInfos(tasks);
+  std::vector<TopLevelRowInfo*> sorted_infos;
+  sorted_infos.reserve(top_level_rows_.size());
   for (auto& [task_id, info] : top_level_rows_) {
-    CreateTopLevelRowControls(info.get());
+    sorted_infos.push_back(info.get());
+  }
+  std::sort(
+      sorted_infos.begin(),
+      sorted_infos.end(),
+      [](const TopLevelRowInfo* first, const TopLevelRowInfo* second) {
+        return FirstTaskShouldPrecedeSecond(first->task, second->task);
+      });
+  for (TopLevelRowInfo* info : sorted_infos) {
+    CreateTopLevelRowControls(info);
     row_controls.emplace_back(info->task_row);
   }
   splice(0, 0, row_controls);
@@ -371,6 +398,19 @@ void TaskListModelBase::ExistingTaskChanged(const Task& t) noexcept {
           reinterpret_cast<HdyPreferencesRow*>(
               it_this_task->second->task_row->gobj()),
           t.name().c_str());
+      it_this_task->second->task = t;
+
+      const guint prev_pos = FindItem(*it_this_task->second);
+      guint new_pos = ComputePositionForTopLevelTask(t);
+      if (prev_pos != new_pos) {
+        ScopedChangeValue supperss(&signals_suppressed_, true);
+        remove(prev_pos);
+        // For some reason inserting old row does not work - it will be
+        // 0 pixels height. Just re-create it for insertion as workaround.
+        CreateTopLevelRowControls(it_this_task->second.get());
+        insert(new_pos, it_this_task->second->task_row);
+      }
+
       ReCustomizeRow(it_this_task->second->task_row, t);
     }
   } else {
@@ -450,7 +490,8 @@ void TaskListModelBase::AfterTaskAdded(const Task& t) noexcept {
       *t.id(), std::make_unique<TopLevelRowInfo>(t));
   VERIFY(added_ok);
   CreateTopLevelRowControls(it->second.get());
-  append(it->second->task_row);
+  const guint item_pos = ComputePositionForTopLevelTask(t);
+  insert(item_pos, it->second->task_row);
 }
 
 void TaskListModelBase::BeforeTaskDeleted(const Task& t) noexcept {
@@ -524,6 +565,17 @@ void TaskListModelBase::SelectTask(
         *child_list_box_row);
   }
   selected_task_id_ = new_selected_task_id;
+}
+
+guint TaskListModelBase::ComputePositionForTopLevelTask(
+    const Task& t) const noexcept {
+  guint result = 0;
+  for (const auto& [id, info] : top_level_rows_) {
+    if (FirstTaskShouldPrecedeSecond(info->task, t)) {
+      ++result;
+    }
+  }
+  return result;
 }
 
 }  // namespace m_time_tracker

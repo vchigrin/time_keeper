@@ -52,8 +52,11 @@ class ListModelBase: public Gio::ListStore<Gtk::Widget> {
   // list view.
   virtual Glib::RefPtr<Gtk::Widget> CreateRowFromObject(
       const ObjectType& o) noexcept = 0;
+  virtual bool FirstObjectShouldPrecedeSecond(
+      const ObjectType& first, const ObjectType& second) const noexcept = 0;
 
-  void SetContent(const std::vector<ObjectType>& objects) noexcept;
+  void SetContent(std::vector<ObjectType> objects) noexcept;
+
 
   void ExistingObjectChanged(const ObjectType& t) noexcept;
   void AfterObjectAdded(const ObjectType& t) noexcept;
@@ -70,9 +73,10 @@ class ListModelBase: public Gio::ListStore<Gtk::Widget> {
 
   void InsertUpdatindIndeces(
       guint position, const Glib::RefPtr<Gtk::Widget>& control) noexcept;
-  // Item in |object_id_to_item_index_|, describing modified element,
+  // Item in |object_id_to_item_info_|, describing modified element,
   // is not touched. All items with greater positions are updated.
   void RemoveUpdatingIndices(guint position) noexcept;
+  guint ComputePositionForItem(const ObjectType& t) const noexcept;
 
   Gtk::Widget* CreateWidget(const Glib::RefPtr<Glib::Object> obj) noexcept {
     // Caller responsible on releasing reference.
@@ -82,7 +86,16 @@ class ListModelBase: public Gio::ListStore<Gtk::Widget> {
 
   static const Glib::Quark object_id_quark_;
 
-  std::unordered_map<typename ObjectType::Id, guint> object_id_to_item_index_;
+  struct ItemInfo {
+    ItemInfo(guint idx, const ObjectType& obj) noexcept
+        : item_index(idx),
+          object(obj) {}
+
+    guint item_index;
+    ObjectType object;
+  };
+
+  std::unordered_map<typename ObjectType::Id, ItemInfo> object_id_to_item_info_;
 };
 
 template<typename ObjectType>
@@ -109,17 +122,23 @@ Glib::RefPtr<Gtk::Widget> ListModelBase<ObjectType>::DoCreateRowFromObject(
 
 template<typename ObjectType>
 void ListModelBase<ObjectType>::SetContent(
-    const std::vector<ObjectType>& objects) noexcept {
-  object_id_to_item_index_.clear();
+    std::vector<ObjectType> objects) noexcept {
+  object_id_to_item_info_.clear();
   std::vector<Glib::RefPtr<Gtk::Widget>> items;
   items.reserve(objects.size());
+  std::sort(
+      objects.begin(),
+      objects.end(),
+      [this](const ObjectType& first, const ObjectType& second) {
+        return FirstObjectShouldPrecedeSecond(first, second);
+      });
   for (const ObjectType& t : objects) {
     VERIFY(t.id());
     auto control = DoCreateRowFromObject(t);
     VERIFY(control);
     items.push_back(std::move(control));
-    VERIFY(object_id_to_item_index_.insert(
-        {*t.id(), items.size() - 1}).second);
+    VERIFY(object_id_to_item_info_.insert(
+        {*t.id(), ItemInfo(static_cast<guint>(items.size() - 1), t)}).second);
   }
   const guint old_size = get_n_items();
   splice(0U, /* n_removals */ old_size, items);
@@ -129,24 +148,31 @@ template<typename ObjectType>
 void ListModelBase<ObjectType>::ExistingObjectChanged(
     const ObjectType& t) noexcept {
   VERIFY(t.id());
-  auto it = object_id_to_item_index_.find(*t.id());
-  guint item_position = 0;
-  if (it != object_id_to_item_index_.end()) {
-    item_position = it->second;
-    RemoveUpdatingIndices(item_position);
-  } else {
-    item_position = get_n_items();
+  auto it = object_id_to_item_info_.find(*t.id());
+  if (it != object_id_to_item_info_.end()) {
+    RemoveUpdatingIndices(it->second.item_index);
+    object_id_to_item_info_.erase(it);
   }
+  const guint item_position = ComputePositionForItem(t);
 
   auto new_control = DoCreateRowFromObject(t);
   if (new_control) {
     InsertUpdatindIndeces(item_position, new_control);
-    object_id_to_item_index_[*t.id()] = item_position;
-  } else {
-    if (it != object_id_to_item_index_.end()) {
-      object_id_to_item_index_.erase(it);
+    object_id_to_item_info_.insert_or_assign(
+        *t.id(), ItemInfo(item_position, t));
+  }
+}
+
+template<typename ObjectType>
+guint ListModelBase<ObjectType>::ComputePositionForItem(
+    const ObjectType& t) const noexcept {
+  guint item_position = 0;
+  for (const auto& [id, info] : object_id_to_item_info_) {
+    if (FirstObjectShouldPrecedeSecond(info.object, t)) {
+      ++item_position;
     }
   }
+  return item_position;
 }
 
 template<typename ObjectType>
@@ -157,21 +183,22 @@ void ListModelBase<ObjectType>::AfterObjectAdded(
   if (!new_control) {
     return;
   }
-  const guint new_item_index = get_n_items();
-  const auto insert_result = object_id_to_item_index_.insert(
-      {*t.id(), new_item_index});
+  const guint new_item_index = ComputePositionForItem(t);
+  InsertUpdatindIndeces(new_item_index, new_control);
+  const auto insert_result = object_id_to_item_info_.insert(
+      {*t.id(),
+       ItemInfo(new_item_index, t)});
   VERIFY(insert_result.second);
-  append(new_control);
 }
 
 template<typename ObjectType>
 void ListModelBase<ObjectType>::BeforeObjectDeleted(
     const ObjectType& t) noexcept {
   VERIFY(t.id());
-  auto it = object_id_to_item_index_.find(*t.id());
-  if (it != object_id_to_item_index_.end()) {
-    RemoveUpdatingIndices(it->second);
-    object_id_to_item_index_.erase(it);
+  auto it = object_id_to_item_info_.find(*t.id());
+  if (it != object_id_to_item_info_.end()) {
+    RemoveUpdatingIndices(it->second.item_index);
+    object_id_to_item_info_.erase(it);
   }
 }
 
@@ -179,9 +206,9 @@ template<typename ObjectType>
 void ListModelBase<ObjectType>::InsertUpdatindIndeces(
     guint position, const Glib::RefPtr<Gtk::Widget>& control) noexcept {
   insert(position, control);
-  for (auto& [object_id, object_pos] : object_id_to_item_index_) {
-    if (object_pos >= position) {
-      ++object_pos;
+  for (auto& [object_id, object_info] : object_id_to_item_info_) {
+    if (object_info.item_index >= position) {
+      ++object_info.item_index;
     }
   }
 }
@@ -189,9 +216,9 @@ void ListModelBase<ObjectType>::InsertUpdatindIndeces(
 template<typename ObjectType>
 void ListModelBase<ObjectType>::RemoveUpdatingIndices(guint position) noexcept {
   remove(position);
-  for (auto& [object_id, object_pos] : object_id_to_item_index_) {
-    if (object_pos > position) {
-      --object_pos;
+  for (auto& [object_id, object_info] : object_id_to_item_info_) {
+    if (object_info.item_index > position) {
+      --object_info.item_index;
     }
   }
 }

@@ -29,6 +29,11 @@ class ActivitiesListModelBase: public ListModelBase<Activity> {
 
   using ListModelBase::SetContent;
 
+  bool FirstObjectShouldPrecedeSecond(
+      const Activity& first, const Activity& second) const noexcept override {
+    return first.start_time() < second.start_time();
+  }
+
  protected:
   virtual bool ShouldShowActivity(const Activity&) noexcept {
     return true;

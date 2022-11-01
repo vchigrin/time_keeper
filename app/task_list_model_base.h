@@ -123,6 +123,7 @@ class TaskListModelBase: public Gio::ListStore<Gtk::Widget> {
       Task::Id child_task_id) const noexcept;
   void UnselectAllChilListBoxesExcept(
       Gtk::ListBox* list_box_to_exclude) noexcept;
+  guint ComputePositionForTopLevelTask(const Task& t) const noexcept;
 
   AppState* const app_state_;
   const bool should_display_archived_;
