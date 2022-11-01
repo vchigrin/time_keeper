@@ -262,7 +262,7 @@ void MainWindow::EditTask(Task* task) noexcept {
 void MainWindow::OnPageStackVisibleChildChanged() noexcept {
   main_stack_->set_visible_child(*page_stack_);
   if (page_stack_->get_visible_child() == box_statistics_) {
-    statistics_view_.Recalculate();
+    statistics_view_.ResetCurrentTaskAndRecalculate();
   }
   if (page_stack_->get_visible_child() == box_recent_activities_) {
     recent_activities_model_->Recalculate();

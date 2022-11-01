@@ -260,6 +260,11 @@ void StatisticsView::OnDateRangeChanged() noexcept {
   Recalculate();
 }
 
+void StatisticsView::ResetCurrentTaskAndRecalculate() noexcept {
+  current_parent_task_id_ = std::nullopt;
+  Recalculate();
+}
+
 void StatisticsView::Recalculate() noexcept {
   const outcome::std_result<std::vector<Activity::StatEntry>> maybe_stats =
       current_parent_task_id_ ?

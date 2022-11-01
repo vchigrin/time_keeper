@@ -22,9 +22,10 @@ class StatisticsView : public ViewWithDateRange {
       const Glib::RefPtr<Gtk::Builder>& resource_builder,
       AppState* app_state) noexcept;
   ~StatisticsView();
-  void Recalculate() noexcept;
+  void ResetCurrentTaskAndRecalculate() noexcept;
 
  private:
+  void Recalculate() noexcept;
   struct DisplayedStatInfo {
     Activity::StatEntry stat;
     std::optional<Cairo::RectangleInt> last_drawn_rect;
