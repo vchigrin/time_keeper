@@ -147,7 +147,7 @@
                   <object class="GtkLabel">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="label" translatable="no">:</property>
+                    <property name="label">:</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -228,7 +228,7 @@
                   <object class="GtkLabel">
                     <property name="visible">True</property>
                     <property name="can-focus">False</property>
-                    <property name="label" translatable="no">:</property>
+                    <property name="label">:</property>
                   </object>
                   <packing>
                     <property name="expand">False</property>
@@ -820,6 +820,7 @@
                         <items>
                           <item id="INTERVAL_NONE" translatable="yes">-- Quick select --</item>
                           <item id="INTERVAL_24H" translatable="yes">Last 24h</item>
+                          <item id="INTERVAL_TODAY" translatable="yes">Today</item>
                           <item id="INTERVAL_WEEK" translatable="yes">Last week</item>
                           <item id="INTERVAL_30D" translatable="yes">Last 30 days</item>
                           <item id="INTERVAL_ALL" translatable="yes">Beginning of recording</item>
@@ -937,6 +938,7 @@
                         <items>
                           <item id="INTERVAL_NONE" translatable="yes">-- Quick select --</item>
                           <item id="INTERVAL_24H" translatable="yes">Last 24h</item>
+                          <item id="INTERVAL_TODAY" translatable="yes">Today</item>
                           <item id="INTERVAL_WEEK" translatable="yes">Last week</item>
                           <item id="INTERVAL_30D" translatable="yes">Last 30 days</item>
                           <item id="INTERVAL_ALL" translatable="yes">Beginning of recording</item>

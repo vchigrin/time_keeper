@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: mobile_time_tracker\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-10-05 01:19+0300\n"
-"PO-Revision-Date: 2022-11-05 23:04+0300\n"
+"POT-Creation-Date: 2022-11-06 00:36+0300\n"
+"PO-Revision-Date: 2022-11-06 00:37+0300\n"
 "Last-Translator: Vyacheslav Chigrin <vyacheslav.chigrin@izba.dev>\n"
 "Language-Team: Russian <vyacheslav.chigrin@izba.dev>\n"
 "Language: ru\n"
@@ -80,10 +80,6 @@ msgstr "Задача:"
 msgid "Start:"
 msgstr "Початок:"
 
-#: app/main_window.ui:150 app/main_window.ui:231
-msgid ":"
-msgstr ""
-
 #: app/main_window.ui:185
 msgid "End:"
 msgstr "Кінець"
@@ -120,45 +116,45 @@ msgstr "Редагувати список задач"
 msgid "Recent activities"
 msgstr "Нещодавні активності"
 
-#: app/main_window.ui:762 app/main_window.ui:879
+#: app/main_window.ui:762 app/main_window.ui:880
 msgid "From:"
 msgstr "З:"
 
-#: app/main_window.ui:787 app/main_window.ui:904
+#: app/main_window.ui:787 app/main_window.ui:905
 msgid "To:"
 msgstr "До:"
 
-#: app/main_window.ui:821 app/main_window.ui:938
+#: app/main_window.ui:821 app/main_window.ui:939
 msgid "-- Quick select --"
 msgstr "--Швидкий вибор--"
 
-#: app/main_window.ui:822 app/main_window.ui:939
+#: app/main_window.ui:822 app/main_window.ui:940
 msgid "Last 24h"
 msgstr "Останні 24г"
 
-#: app/main_window.ui:823 app/main_window.ui:940
+#: app/main_window.ui:823 app/main_window.ui:941
+msgid "Today"
+msgstr "Сьогодні"
+
+#: app/main_window.ui:824 app/main_window.ui:942
 msgid "Last week"
 msgstr "Останній тиждень"
 
-#: app/main_window.ui:824 app/main_window.ui:941
+#: app/main_window.ui:825 app/main_window.ui:943
 msgid "Last 30 days"
 msgstr "Останні 30 діб"
 
-#: app/main_window.ui:825 app/main_window.ui:942
+#: app/main_window.ui:826 app/main_window.ui:944
 msgid "Beginning of recording"
 msgstr "З початку записів"
 
-#: app/main_window.ui:861
+#: app/main_window.ui:862
 msgid "Statistics"
 msgstr "Статистика"
 
-#: app/main_window.ui:955
+#: app/main_window.ui:957
 msgid "CSV file path:"
 msgstr "Шлях до CSV файла"
-
-#: app/main_window.ui:971
-msgid "\n"
-msgstr ""
 
 #: app/main_window.ui:982
 msgid "Browse..."
@@ -171,14 +167,6 @@ msgstr "Зробити експорт"
 #: app/main_window.ui:1016
 msgid "Export to CSV"
 msgstr "Експорт до CSV файлу"
-
-#: app/main_window.ui:1023
-msgid "page0"
-msgstr ""
-
-#: app/main_window.ui:1034
-msgid "page1"
-msgstr ""
 
 #: app/utils.cc:29
 msgid " hours "

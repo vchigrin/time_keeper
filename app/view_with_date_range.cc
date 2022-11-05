@@ -19,6 +19,7 @@ namespace {
 
 constexpr std::string_view kIntervalNone = "INTERVAL_NONE";
 constexpr std::string_view kInterval24h = "INTERVAL_24H";
+constexpr std::string_view kIntervalToday = "INTERVAL_TODAY";
 constexpr std::string_view kIntervalWeek = "INTERVAL_WEEK";
 constexpr std::string_view kInterval30d = "INTERVAL_30D";
 constexpr std::string_view kIntervalAll = "INTERVAL_ALL";
@@ -106,14 +107,17 @@ void ViewWithDateRange::OnComboQuickSelectChanged() noexcept {
     return;
   }
   to_time_ = Activity::GetCurrentTimePoint();
+  const auto this_day_start = GetLocalStartDayTimepoint(to_time_);
   // TODO(vchigrin): Use chrono::days in C++20.
   static constexpr auto kDay = std::chrono::hours(24);
   if (str_quick_select_id == kInterval24h) {
     from_time_ = to_time_ - std::chrono::hours(24);
+  } else if (str_quick_select_id == kIntervalToday) {
+    from_time_ = this_day_start;
   } else if (str_quick_select_id == kIntervalWeek) {
-    from_time_ = to_time_ - kDay * 7;
+    from_time_ = this_day_start - kDay * 6;
   } else if (str_quick_select_id == kInterval30d) {
-    from_time_ = to_time_ - kDay * 30;
+    from_time_ = this_day_start - kDay * 29;
   } else if (str_quick_select_id == kIntervalAll) {
     auto earliest_start_or_error = Activity::LoadEarliestActivityStart(
         &app_state_->db_for_read_only());
