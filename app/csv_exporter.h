@@ -29,14 +29,17 @@ class CSVExporter {
   const Activity::TimePoint from_time_;
   const Activity::TimePoint to_time_;
   const std::string export_file_path_;
+  struct TaskNames {
+    std::string task_name;
+    std::optional<std::string> parent_task_name;
+  };
 
   outcome::std_result<void> WriteHeader(std::ofstream& out_stream) noexcept;
   outcome::std_result<void> WriteDataRow(
       std::ofstream& out_stream, const Activity& a) noexcept;
-  outcome::std_result<std::string> GetEscapedTaskName(
-      Task::Id task_id) noexcept;
+  outcome::std_result<TaskNames> GetEscapedTaskName(Task::Id task_id) noexcept;
 
-  std::unordered_map<Task::Id, std::string> cached_escaped_task_names_;
+  std::unordered_map<Task::Id, TaskNames> cached_escaped_task_names_;
 };
 
 }  // namespace m_time_tracker

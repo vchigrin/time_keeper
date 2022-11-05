@@ -87,7 +87,7 @@ outcome::std_result<void> CSVExporter::Run() noexcept {
 
 outcome::std_result<void> CSVExporter::WriteHeader(
     std::ofstream& out_stream) noexcept {
-  out_stream << "Start time,End time,Task name\r\n";
+  out_stream << "Start time,End time,Task name,Parent task name\r\n";
   if (!out_stream.good()) {
     return std::error_code(errno, std::system_category());
   }
@@ -96,7 +96,7 @@ outcome::std_result<void> CSVExporter::WriteHeader(
 
 outcome::std_result<void> CSVExporter::WriteDataRow(
     std::ofstream& out_stream, const Activity& a) noexcept {
-  const outcome::std_result<std::string> maybe_task_name =
+  const outcome::std_result<TaskNames> maybe_task_name =
       GetEscapedTaskName(a.task_id());
   if (!maybe_task_name) {
     return maybe_task_name.error();
@@ -104,17 +104,20 @@ outcome::std_result<void> CSVExporter::WriteDataRow(
   const std::string start_time = FormatTime(a.start_time());
   VERIFY(a.end_time());
   const std::string end_time = FormatTime(*a.end_time());
+  const auto& task_name = maybe_task_name.value();
   out_stream
       << start_time << ","
       << end_time << ","
-      << maybe_task_name.value() << "\r\n";
+      << task_name.task_name << ","
+      << task_name.parent_task_name.value_or("")
+      << "\r\n";
   if (!out_stream.good()) {
     return std::error_code(errno, std::system_category());
   }
   return outcome::success();
 }
 
-outcome::std_result<std::string> CSVExporter::GetEscapedTaskName(
+outcome::std_result<CSVExporter::TaskNames> CSVExporter::GetEscapedTaskName(
     Task::Id task_id) noexcept {
   const auto it_cached = cached_escaped_task_names_.find(task_id);
   if (it_cached != cached_escaped_task_names_.end()) {
@@ -124,7 +127,16 @@ outcome::std_result<std::string> CSVExporter::GetEscapedTaskName(
   if (!maybe_task) {
     return maybe_task.error();
   }
-  const std::string result = EscapeString(maybe_task.value().name());
+  TaskNames result;
+  result.task_name = EscapeString(maybe_task.value().name());
+  if (maybe_task.value().parent_task_id()) {
+    const auto maybe_parent = Task::LoadById(
+        db_for_read_only_, *maybe_task.value().parent_task_id());
+    if (!maybe_parent) {
+      return maybe_parent.error();
+    }
+    result.parent_task_name = EscapeString(maybe_parent.value().name());
+  }
   VERIFY(cached_escaped_task_names_.emplace(task_id, result).second);
   return result;
 }
