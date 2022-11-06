@@ -94,6 +94,8 @@ tests_executable = executable('tests_executable',
                gtest_main_dep,
            ])
 
+test('tests', tests_executable)
+
 
 desktop_file = i18n.merge_file(
     input: meson.project_name() + '.desktop.in',
@@ -118,4 +120,17 @@ test(
      args: [desktop_file]
 )
 
-test('tests', tests_executable)
+appstream_file = i18n.merge_file(
+  input: 'io.github.vchigrin.time_keeper.appdata.xml.in',
+  output: 'io.github.vchigrin.time_keeper.appdata.xml',
+  po_dir: '../po',
+  install: true,
+  install_dir: join_paths(get_option('datadir'), 'appdata')
+)
+
+appstream_util = find_program('appstream-util', required: false)
+test(
+    'Validate appstream file',
+    appstream_util,
+    args: ['validate', appstream_file]
+)

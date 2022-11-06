@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.vchigrin.time_keeper</id>
+  <name>TimeKeeper</name>
+
+  <url type="homepage">https://github.com/vchigrin/time_keeper</url>
+  <url type="bugtracker">https://github.com/vchigrin/time_keeper/issues</url>
+
+  <translation type="gettext">time_keeper</translation>
+  <content_rating type="oars-1.0" />
+  <launchable type="desktop-id">time_keeper.desktop</launchable>
+  <developer_name>Vyacheslav Chigrin</developer_name>
+  <update_contact>vyacheslav.chigrin@izba.dev</update_contact>
+  <metadata_license>0BSD</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+
+  <summary>Time tracking application for mobile GNU/Linux systems.</summary>
+  <description>
+    <p>
+      TimeKeeper is a time tracking software focused on using list of tasks,
+      defined by user in advance.
+      Supports statistics viewing and export records to CSV files.
+    </p>
+  </description>
+
+  <releases>
+    <release version="0.0.1" date="2022-11-06"/>
+  </releases>
+</component>
