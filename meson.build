@@ -26,4 +26,5 @@ gtest_main_dep = dependency('gtest_main')
 project_include_dir = include_directories('.')
 
 subdir('app')
+subdir('data')
 subdir('po')
