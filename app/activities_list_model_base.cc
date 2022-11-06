@@ -30,11 +30,13 @@ ActivitiesListModelBase::ActivitiesListModelBase(
     AppState* app_state,
     MainWindow* main_window,
     Gtk::Window* parent_window,
-    Glib::RefPtr<Gtk::Builder> resource_builder) noexcept
+    Glib::RefPtr<Gtk::Builder> resource_builder,
+    bool show_recent_first) noexcept
     : ListModelBase(app_state),
       main_window_(main_window),
       parent_window_(parent_window),
-      resource_builder_(std::move(resource_builder)) {
+      resource_builder_(std::move(resource_builder)),
+      show_recent_first_(show_recent_first) {
   VERIFY(main_window_);
   all_connections_.emplace_back(app_state->ConnectExistingActivityChanged(
       sigc::mem_fun(*this, &ActivitiesListModelBase::ExistingObjectChanged)));

@@ -17,7 +17,7 @@ RecentActivitiesModel::RecentActivitiesModel(
     MainWindow* main_window,
     Glib::RefPtr<Gtk::Builder> resource_builder) noexcept
     : ActivitiesListModelBase(
-          app_state, main_window, main_window, resource_builder) {
+          app_state, main_window, main_window, resource_builder, true) {
   Recalculate();
 }
 

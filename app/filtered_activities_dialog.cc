@@ -15,7 +15,7 @@ FilteredActivitiesDialog::FilteredActivitiesDialog(
   Gtk::ListBox* lst_filtered_activities =
       GetWidgetChecked<Gtk::ListBox>(builder, "lst_filtered_activities");
   activities_model_ = ActivitiesListModelBase::create<ActivitiesListModelBase>(
-      app_state, main_window, this, builder);
+      app_state, main_window, this, builder, false);
   lst_filtered_activities->bind_model(
       activities_model_,
       activities_model_->slot_create_widget());

@@ -23,7 +23,8 @@ class ActivitiesListModelBase: public ListModelBase<Activity> {
       AppState* app_state,
       MainWindow* main_window,
       Gtk::Window* parent_window,
-      Glib::RefPtr<Gtk::Builder> resource_builder) noexcept;
+      Glib::RefPtr<Gtk::Builder> resource_builder,
+      bool show_recent_first) noexcept;
   Glib::RefPtr<Gtk::Widget> CreateRowFromObject(
       const Activity& a) noexcept override;
 
@@ -31,7 +32,11 @@ class ActivitiesListModelBase: public ListModelBase<Activity> {
 
   bool FirstObjectShouldPrecedeSecond(
       const Activity& first, const Activity& second) const noexcept override {
-    return first.start_time() < second.start_time();
+    if (show_recent_first_) {
+      return first.start_time() > second.start_time();
+    } else {
+      return first.start_time() < second.start_time();
+    }
   }
 
  protected:
@@ -48,6 +53,7 @@ class ActivitiesListModelBase: public ListModelBase<Activity> {
   MainWindow* const main_window_;
   Gtk::Window* const parent_window_;
   Glib::RefPtr<Gtk::Builder> resource_builder_;
+  const bool show_recent_first_;
 };
 
 }  // namespace m_time_tracker

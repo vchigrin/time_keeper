@@ -578,6 +578,12 @@
                       <object class="GtkLabel" id="lbl_running_time">
                         <property name="visible">True</property>
                         <property name="can-focus">False</property>
+                        <property name="xpad">5</property>
+                        <property name="justify">center</property>
+                        <property name="wrap">True</property>
+                        <attributes>
+                          <attribute name="font-desc" value="System-ui 15"/>
+                        </attributes>
                       </object>
                       <packing>
                         <property name="expand">False</property>
