@@ -110,6 +110,12 @@ void EditTaskDialog::InitializeParentTaskCombo(
   if (!maybe_tasks) {
     main_window_->OnFatalError(maybe_tasks.assume_error());
   }
+  std::sort(
+      maybe_tasks.value().begin(),
+      maybe_tasks.value().end(),
+      [](const Task& first, const Task& second) {
+        return first.name() < second.name();
+      });
   for (const Task& t : maybe_tasks.value()) {
     VERIFY(t.id());
     if (task_ && t.id() == task_->id()) {

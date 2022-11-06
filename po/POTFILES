@@ -24,7 +24,7 @@ app/list_model_base.h
 app/main.cc
 app/main_window.cc
 app/main_window.h
-app/main_window.ui
+app/everything.ui
 app/recent_activities_model.cc
 app/recent_activities_model.h
 app/running_task.cc

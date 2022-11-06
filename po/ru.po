@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: time_keeper\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-11-06 00:36+0300\n"
-"PO-Revision-Date: 2022-11-06 00:37+0300\n"
+"POT-Creation-Date: 2022-11-07 01:03+0300\n"
+"PO-Revision-Date: 2022-11-07 01:06+0300\n"
 "Last-Translator: Vyacheslav Chigrin <vyacheslav.chigrin@izba.dev>\n"
 "Language-Team: Russian <vyacheslav.chigrin@izba.dev>\n"
 "Language: ru\n"
@@ -20,12 +20,12 @@ msgstr ""
 "%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "X-Generator: Gtranslator 3.38.0\n"
 
-#: app/activities_list_model_base.cc:107
+#: app/activities_list_model_base.cc:109
 #, boost-format
 msgid "Delete activity for task \"%1%\"?"
 msgstr "Удалить активность задачи \"%1%\"?"
 
-#: app/activities_list_model_base.cc:142
+#: app/activities_list_model_base.cc:144
 msgid "Error - end time must be after start time."
 msgstr "Ошибка - конечное время должно быть после начального."
 
@@ -58,12 +58,12 @@ msgstr "Хотите ли сделать запись о выполняющей�
 msgid "<No task running>"
 msgstr "<Нет выполняющейся задачи>"
 
-#: app/main_window.cc:377
+#: app/main_window.cc:378
 #, boost-format
-msgid "Running: %1% for %2%"
-msgstr "Идёт: %1% на протяжении %2%"
+msgid "Running: \"%1%\" for %2%"
+msgstr "Идёт: \"%1%\" на протяжении %2%"
 
-#: app/main_window.cc:385
+#: app/main_window.cc:386
 #, c-format, boost-format
 msgid ""
 "Fatal error: \"%s\".\n"
@@ -72,99 +72,115 @@ msgstr ""
 "Фатальная ошибка \"%s\".\n"
 "Приложение сейчас завершится."
 
-#: app/main_window.ui:82
+#: app/everything.ui:28
+msgid "Edit activity"
+msgstr "Редактировать активность"
+
+#: app/everything.ui:83
 msgid "Task:"
 msgstr "Задача:"
 
-#: app/main_window.ui:104
+#: app/everything.ui:105
 msgid "Start:"
 msgstr "Начало:"
 
-#: app/main_window.ui:185
+#: app/everything.ui:186
 msgid "End:"
 msgstr "Конец:"
 
-#: app/main_window.ui:405
+#: app/everything.ui:289
+msgid "Choose date"
+msgstr "Выбрать дату"
+
+#: app/everything.ui:358
+msgid "Edit task"
+msgstr "Редактировать задачу"
+
+#: app/everything.ui:408
 msgid "Task name"
 msgstr "Название задачи:"
 
-#: app/main_window.ui:428
+#: app/everything.ui:431
 msgid "Parent task:"
 msgstr "Родительская задача:"
 
-#: app/main_window.ui:449
+#: app/everything.ui:452
 msgid "Archived"
 msgstr "Архивная"
 
-#: app/main_window.ui:641
+#: app/everything.ui:473
+msgid "Activities list"
+msgstr "Список активностей"
+
+#: app/everything.ui:652
 msgid "Stop and record"
 msgstr "Остановить и сделать запись"
 
-#: app/main_window.ui:661
+#: app/everything.ui:672
 msgid "Record activity"
 msgstr "Записать активность"
 
-#: app/main_window.ui:695
+#: app/everything.ui:706
 msgid "Add new task"
 msgstr "Добавить новую задачу"
 
-#: app/main_window.ui:708
+#: app/everything.ui:719
 msgid "Edit task list"
 msgstr "Редактировать список задач"
 
-#: app/main_window.ui:744
+#: app/everything.ui:755
 msgid "Recent activities"
 msgstr "Недавние активности"
 
-#: app/main_window.ui:762 app/main_window.ui:880
+#: app/everything.ui:773 app/everything.ui:891
 msgid "From:"
 msgstr "С:"
 
-#: app/main_window.ui:787 app/main_window.ui:905
+#: app/everything.ui:798 app/everything.ui:916
 msgid "To:"
 msgstr "До:"
 
-#: app/main_window.ui:821 app/main_window.ui:939
+#: app/everything.ui:832 app/everything.ui:950
 msgid "-- Quick select --"
 msgstr "-- Быстрый выбор --"
 
-#: app/main_window.ui:822 app/main_window.ui:940
+#: app/everything.ui:833 app/everything.ui:951
 msgid "Last 24h"
 msgstr "Последние 24ч"
 
-#: app/main_window.ui:823 app/main_window.ui:941
+#: app/everything.ui:834 app/everything.ui:952
 msgid "Today"
 msgstr "Сегодня"
 
-#: app/main_window.ui:824 app/main_window.ui:942
+#: app/everything.ui:835 app/everything.ui:953
 msgid "Last week"
 msgstr "Последняя неделя"
 
-#: app/main_window.ui:825 app/main_window.ui:943
+#: app/everything.ui:836 app/everything.ui:954
 msgid "Last 30 days"
 msgstr "Последние 30 дней"
 
-#: app/main_window.ui:826 app/main_window.ui:944
+#: app/everything.ui:837 app/everything.ui:955
 msgid "Beginning of recording"
 msgstr "С начала всех записей"
 
-#: app/main_window.ui:862
+#: app/everything.ui:873
 msgid "Statistics"
 msgstr "Статистика"
 
-#: app/main_window.ui:957
+#: app/everything.ui:968
 msgid "CSV file path:"
 msgstr "Путь к CSV файлу:"
 
-#: app/main_window.ui:982
+#: app/everything.ui:993
 msgid "Browse..."
 msgstr "Выбрать..."
 
-#: app/main_window.ui:1002
+#: app/everything.ui:1013
 msgid "Perform export"
 msgstr "Произвести экспорт"
 
-#: app/main_window.ui:1016
+#: app/everything.ui:1027
 msgid "Export to CSV"
 msgstr "Экспорт в CSV"
 

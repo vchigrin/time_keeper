@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
   <gresource prefix="/io/github/vchigrin/time_keeper">
-    <file preprocess="xml-stripblanks">main_window.ui</file>
+    <file preprocess="xml-stripblanks">everything.ui</file>
     <file compressed="true">style.css</file>
   </gresource>
 </gresources>

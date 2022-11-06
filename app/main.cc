@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
   app->signal_startup().connect(&OnStartup);
 
   Glib::RefPtr<Gtk::Builder> builder = Gtk::Builder::create_from_resource(
-      "/io/github/vchigrin/time_keeper/main_window.ui");
+      "/io/github/vchigrin/time_keeper/everything.ui");
   VERIFY(builder);
 
   const std::filesystem::path db_path = GetDbPathOrExit();

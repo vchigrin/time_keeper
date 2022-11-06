@@ -374,7 +374,8 @@ void MainWindow::UpdateLblRunningTime() noexcept {
     auto maybe_runtime = app_state_->RunningTaskRunTime();
     VERIFY(maybe_runtime);
     const Activity::Duration runtime = *maybe_runtime;
-    lbl_running_time_->set_text((boost::format(_L("Running: %1% for %2%")) %
+    lbl_running_time_->set_text((boost::format(
+        _L("Running: \"%1%\" for %2%")) %
         running_task->name() %
         FormatRuntime(runtime, FormatMode::kShortWithSeconds)).str());
   }

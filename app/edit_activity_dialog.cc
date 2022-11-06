@@ -92,6 +92,12 @@ void EditActivityDialog::FillTasksCombo() noexcept {
       tasks.push_back(std::move(maybe_cur_task.value()));
     }
   }
+  std::sort(
+      tasks.begin(),
+      tasks.end(),
+      [](const Task& first, const Task& second) {
+        return first.name() < second.name();
+      });
   for (const Task& t : tasks) {
     VERIFY(t.id());
     const std::string id = std::to_string(*t.id());

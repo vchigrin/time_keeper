@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: time_keeper\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-11-06 00:36+0300\n"
+"POT-Creation-Date: 2022-11-07 01:03+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,12 +17,12 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: app/activities_list_model_base.cc:107
+#: app/activities_list_model_base.cc:109
 #, boost-format
 msgid "Delete activity for task \"%1%\"?"
 msgstr ""
 
-#: app/activities_list_model_base.cc:142
+#: app/activities_list_model_base.cc:144
 msgid "Error - end time must be after start time."
 msgstr ""
 
@@ -55,111 +55,127 @@ msgstr ""
 msgid "<No task running>"
 msgstr ""
 
-#: app/main_window.cc:377
+#: app/main_window.cc:378
 #, boost-format
-msgid "Running: %1% for %2%"
+msgid "Running: \"%1%\" for %2%"
 msgstr ""
 
-#: app/main_window.cc:385
+#: app/main_window.cc:386
 #, c-format, boost-format
 msgid ""
 "Fatal error: \"%s\".\n"
 "Application will now exit."
 msgstr ""
 
-#: app/main_window.ui:82
+#: app/everything.ui:28
+msgid "Edit activity"
+msgstr ""
+
+#: app/everything.ui:83
 msgid "Task:"
 msgstr ""
 
-#: app/main_window.ui:104
+#: app/everything.ui:105
 msgid "Start:"
 msgstr ""
 
-#: app/main_window.ui:185
+#: app/everything.ui:186
 msgid "End:"
 msgstr ""
 
-#: app/main_window.ui:405
+#: app/everything.ui:289
+msgid "Choose date"
+msgstr ""
+
+#: app/everything.ui:358
+msgid "Edit task"
+msgstr ""
+
+#: app/everything.ui:408
 msgid "Task name"
 msgstr ""
 
-#: app/main_window.ui:428
+#: app/everything.ui:431
 msgid "Parent task:"
 msgstr ""
 
-#: app/main_window.ui:449
+#: app/everything.ui:452
 msgid "Archived"
 msgstr ""
 
-#: app/main_window.ui:641
+#: app/everything.ui:473
+msgid "Activities list"
+msgstr ""
+
+#: app/everything.ui:652
 msgid "Stop and record"
 msgstr ""
 
-#: app/main_window.ui:661
+#: app/everything.ui:672
 msgid "Record activity"
 msgstr ""
 
-#: app/main_window.ui:695
+#: app/everything.ui:706
 msgid "Add new task"
 msgstr ""
 
-#: app/main_window.ui:708
+#: app/everything.ui:719
 msgid "Edit task list"
 msgstr ""
 
-#: app/main_window.ui:744
+#: app/everything.ui:755
 msgid "Recent activities"
 msgstr ""
 
-#: app/main_window.ui:762 app/main_window.ui:880
+#: app/everything.ui:773 app/everything.ui:891
 msgid "From:"
 msgstr ""
 
-#: app/main_window.ui:787 app/main_window.ui:905
+#: app/everything.ui:798 app/everything.ui:916
 msgid "To:"
 msgstr ""
 
-#: app/main_window.ui:821 app/main_window.ui:939
+#: app/everything.ui:832 app/everything.ui:950
 msgid "-- Quick select --"
 msgstr ""
 
-#: app/main_window.ui:822 app/main_window.ui:940
+#: app/everything.ui:833 app/everything.ui:951
 msgid "Last 24h"
 msgstr ""
 
-#: app/main_window.ui:823 app/main_window.ui:941
+#: app/everything.ui:834 app/everything.ui:952
 msgid "Today"
 msgstr ""
 
-#: app/main_window.ui:824 app/main_window.ui:942
+#: app/everything.ui:835 app/everything.ui:953
 msgid "Last week"
 msgstr ""
 
-#: app/main_window.ui:825 app/main_window.ui:943
+#: app/everything.ui:836 app/everything.ui:954
 msgid "Last 30 days"
 msgstr ""
 
-#: app/main_window.ui:826 app/main_window.ui:944
+#: app/everything.ui:837 app/everything.ui:955
 msgid "Beginning of recording"
 msgstr ""
 
-#: app/main_window.ui:862
+#: app/everything.ui:873
 msgid "Statistics"
 msgstr ""
 
-#: app/main_window.ui:957
+#: app/everything.ui:968
 msgid "CSV file path:"
 msgstr ""
 
-#: app/main_window.ui:982
+#: app/everything.ui:993
 msgid "Browse..."
 msgstr ""
 
-#: app/main_window.ui:1002
+#: app/everything.ui:1013
 msgid "Perform export"
 msgstr ""
 
-#: app/main_window.ui:1016
+#: app/everything.ui:1027
 msgid "Export to CSV"
 msgstr ""
 
