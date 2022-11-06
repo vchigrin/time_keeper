@@ -1,0 +1,8 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Time keeper
+Icon=time_keeper
+Exec=/usr/bin/time_keeper
+Keywords=Time Tracking;Productivity;
+Terminal=false

@@ -1,11 +1,5 @@
-mobile-time-tracker (0.0.2) unstable; urgency=medium
-
-  * Small internal update.
-
- -- Vyacheslav Chigrin <vyacheslav.chigrin@izba.dev>  Sun, 06 Nov 2022 00:40:01 +0300
-
-mobile-time-tracker (0.0.1) unstable; urgency=medium
+time-keeper (0.0.1) unstable; urgency=medium
 
   * Initial release.
 
- -- Vyacheslav Chigrin (vchigrin) <vyacheslav.chigrin@izba.dev>  Sat, 17 Sep 2022 18:30:12 +0300
+ -- Vyacheslav Chigrin <vyacheslav.chigrin@izba.dev>  Sun, 06 Nov 2022 12:39:07 +0300

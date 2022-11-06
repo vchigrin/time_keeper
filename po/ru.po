@@ -1,12 +1,12 @@
-# Russian translations for mobile_time_tracker package.
-# Copyright (C) 2022 THE mobile_time_tracker'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the mobile_time_tracker package.
+# Russian translations for time_keeper package.
+# Copyright (C) 2022 THE time_keeper'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the time_keeper package.
 # Automatically generated, 2022.
 # Vyacheslav Chigrin <vyacheslav.chigrin@izba.dev>, 2022.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: mobile_time_tracker\n"
+"Project-Id-Version: time_keeper\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-11-06 00:36+0300\n"
 "PO-Revision-Date: 2022-11-06 00:37+0300\n"

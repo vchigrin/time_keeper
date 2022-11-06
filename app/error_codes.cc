@@ -1,4 +1,4 @@
-// Copyright 2021 The "MobileTimeTracker" project authors. All rights reserved.
+// Copyright 2021 The "TimeKeeper" project authors. All rights reserved.
 // Use of this source code is governed by a GPLv3 license that can be
 // found in the LICENSE file.
 
@@ -8,7 +8,7 @@
 namespace m_time_tracker {
 
 const char* CustomErrorCategory::name() const noexcept {
-  return "MobileTimeTrackerError";
+  return "TimeKeeperError";
 }
 
 // Return what each enum means in text

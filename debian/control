@@ -1,4 +1,4 @@
-Source: mobile-time-tracker
+Source: time-keeper
 Maintainer: Vyacheslav Chigrin <vyacheslav.chigrin@izba.dev>
 Section: misc
 Priority: optional
@@ -11,7 +11,7 @@ Build-Depends: debhelper (>= 9),
                libsqlite3-dev (>= 3.34),
                meson (>= 0.56.2)
 
-Package: mobile-time-tracker
+Package: time-keeper
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}
-Description: Time tracker for mobian.
+Description: Mobile-friendly time tracking application.

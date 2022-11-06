@@ -1,12 +1,12 @@
 gnome = import('gnome')
 
-mobild_time_tracker_resources = gnome.compile_resources(
-   'm-time-tracker-resources',
-   'm-time-tracker.gresources.xml',
+time_keeper_resources = gnome.compile_resources(
+   'time_keeper_resources',
+   'time_keeper.gresources.xml',
 )
 
 resources_lib = static_library('resources_lib',
-                        mobild_time_tracker_resources,
+                        time_keeper_resources,
                         cpp_args: ['-Wno-old-style-cast'],
                         dependencies : [
                           gtkmm_dep,
@@ -41,7 +41,7 @@ utils = static_library('utils',
      boost_dep,
    ])
 
-executable('mobile_time_tracker',
+executable('time_keeper',
            'app_state.cc',
            'app_state.h',
            'csv_exporter.cc',

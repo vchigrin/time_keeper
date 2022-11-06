@@ -1,6 +1,0 @@
-[Desktop Entry]
-Version=1.0
-Type=Application
-Name=Mobile time tracker
-Icon=mobile_time_tracker
-Exec=/usr/bin/mobile_time_tracker

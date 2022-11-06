@@ -1,12 +1,12 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the mobile_time_tracker package.
+# This file is distributed under the same license as the time_keeper package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: mobile_time_tracker\n"
+"Project-Id-Version: time_keeper\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2022-11-06 00:36+0300\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"

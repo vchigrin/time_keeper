@@ -1,4 +1,4 @@
-project('mobile_time_tracker', 'cpp',
+project('time_keeper', 'cpp',
   version : '0.1',
   default_options : ['warning_level=3', 'cpp_std=c++17', 'werror=true'])
 i18n = import('i18n')

@@ -1,4 +1,4 @@
-// Copyright 2021 The "MobileTimeTracker" project authors. All rights reserved.
+// Copyright 2021 The "TimeKeeper" project authors. All rights reserved.
 // Use of this source code is governed by a GPLv3 license that can be
 // found in the LICENSE file.
 
@@ -13,13 +13,14 @@
 
 namespace {
 
-constexpr std::string_view kAppFolderName = ".mobile_time_tracker";
+constexpr std::string_view kAppFolderName = ".time_keeper";
 constexpr std::string_view kDbFileName = "data.dat";
 
 void OnStartup() {
   hdy_init();
   Glib::RefPtr<Gtk::CssProvider> css_provider = Gtk::CssProvider::create();
-  css_provider->load_from_resource("/org/mobile_time_tracker/app/style.css");
+  css_provider->load_from_resource(
+      "/io/github/vchigrin/time_keeper/style.css");
   Gtk::StyleContext::add_provider_for_screen(
       Gdk::Screen::get_default(),
       css_provider,
@@ -50,11 +51,11 @@ int main(int argc, char* argv[]) {
   bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
   textdomain(GETTEXT_PACKAGE);
 
-  auto app = Gtk::Application::create("org.mobile_time_tracker.app");
+  auto app = Gtk::Application::create("io.github.vchigrin.time_keeper");
   app->signal_startup().connect(&OnStartup);
 
   Glib::RefPtr<Gtk::Builder> builder = Gtk::Builder::create_from_resource(
-      "/org/mobile_time_tracker/app/main_window.ui");
+      "/io/github/vchigrin/time_keeper/main_window.ui");
   VERIFY(builder);
 
   const std::filesystem::path db_path = GetDbPathOrExit();
