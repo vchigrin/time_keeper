@@ -112,6 +112,9 @@ void EditTaskDialog::InitializeParentTaskCombo(
   }
   for (const Task& t : maybe_tasks.value()) {
     VERIFY(t.id());
+    if (task_ && t.id() == task_->id()) {
+      continue;
+    }
     const std::string id = std::to_string(*t.id());
     cmb_parent_task_->append(id, t.name());
   }
