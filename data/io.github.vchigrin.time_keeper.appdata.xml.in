@@ -14,6 +14,25 @@
   <metadata_license>0BSD</metadata_license>
   <project_license>GPL-3.0-only</project_license>
 
+  <screenshots>
+    <screenshot type="default">
+      <caption>The TimeKeeper main view</caption>
+      <image type="source">https://raw.githubusercontent.com/vchigrin/time_keeper/main/data/screenshots/main_view.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>The TimeKeeper menu view</caption>
+      <image type="source">https://raw.githubusercontent.com/vchigrin/time_keeper/main/data/screenshots/menu.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>The TimeKeeper statistics view</caption>
+      <image type="source">https://raw.githubusercontent.com/vchigrin/time_keeper/main/data/screenshots/statistics.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>The TimeKeeper edit tasks list</caption>
+      <image type="source">https://raw.githubusercontent.com/vchigrin/time_keeper/main/data/screenshots/task_list.png</image>
+    </screenshot>
+  </screenshots>
+
   <summary>Time tracking application for mobile GNU/Linux systems.</summary>
   <description>
     <p>
